@@ -27,9 +27,9 @@
       .panel {
         position: absolute;
         left: 56px;
-        top: 60px;
+        top: 46px;
         width: 590px;
-        height: 520px;
+        height: 548px;
         border-radius: 28px;
         background: linear-gradient(180deg, rgba(14, 22, 47, 0.88), rgba(11, 18, 39, 0.82));
         border: 1px solid rgba(107, 225, 198, 0.45);
@@ -39,7 +39,7 @@
       .eyebrow {
         position: absolute;
         left: 102px;
-        top: 118px;
+        top: 104px;
         color: #6be1c6;
         font-size: 25px;
         letter-spacing: 0.16em;
@@ -48,7 +48,7 @@
       .title {
         position: absolute;
         left: 100px;
-        top: 168px;
+        top: 154px;
         width: 540px;
         color: #f6f8ff;
         font-size: 72px;
@@ -59,7 +59,7 @@
       .subtitle {
         position: absolute;
         left: 102px;
-        top: 364px;
+        top: 352px;
         width: 500px;
         color: #bcc8ff;
         font-size: 26px;
@@ -69,7 +69,7 @@
       .pill-row {
         position: absolute;
         left: 100px;
-        top: 452px;
+        top: 430px;
         display: flex;
         flex-wrap: wrap;
         gap: 16px 14px;
@@ -92,17 +92,17 @@
       .stack {
         position: absolute;
         right: 76px;
-        top: 108px;
+        top: 86px;
         display: flex;
         flex-direction: column;
-        gap: 26px;
+        gap: 20px;
         width: 410px;
       }
       .note {
         border-radius: 24px;
         background: linear-gradient(180deg, rgba(21, 31, 69, 0.92), rgba(16, 24, 56, 0.88));
         border: 1px solid rgba(159, 176, 255, 0.28);
-        padding: 22px 26px;
+        padding: 22px 26px 24px;
         box-shadow: 0 12px 32px rgba(0, 0, 0, 0.26);
       }
       .note-title {
@@ -123,6 +123,18 @@
       .note-line.accent {
         color: #6be1c6;
         font-weight: 700;
+      }
+      .footer-line {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 34px;
+        display: flex;
+        justify-content: center;
+        color: rgba(184, 197, 255, 0.72);
+        font-size: 16px;
+        letter-spacing: 0.14em;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       }
     </style>
   </head>
@@ -155,6 +167,7 @@
           <div class="note-line accent">inject less when risk is high</div>
         </div>
       </div>
+      <div class="footer-line">fail-open memory runtime · github-first alpha</div>
     </div>
   </body>
 </html>
