@@ -1,8 +1,10 @@
 # Social Preview
 
-This repo now includes a first social preview source asset:
+This repo now includes a ready-to-upload social preview asset:
 
-- `assets/social-preview.svg`
+- `assets/social-preview-github.png`
+- source composition: `assets/social-preview-compose.html`
+- background image: `assets/social-preview-background.png`
 
 ## Why this exists
 
@@ -59,11 +61,11 @@ That size works well for GitHub social preview uploads and README hero display.
 1. Open repository `Settings`
 2. Go to `General`
 3. Find `Social preview`
-4. Upload an exported PNG version of `assets/social-preview.svg`
+4. Upload `assets/social-preview-github.png`
 
 ### README hero
 
-The README can reference the SVG directly from the repo.
+The README now references the same final PNG directly from the repo.
 
 ## Discussions recommendation
 

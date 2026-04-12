@@ -1,6 +1,6 @@
 # memory-runtime
 
-![memory-runtime social preview](./assets/social-preview.svg)
+![memory-runtime social preview](./assets/social-preview-github.png)
 
 [![CI](https://github.com/Tom-Wang898/memory-runtime/actions/workflows/ci.yml/badge.svg)](https://github.com/Tom-Wang898/memory-runtime/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/Tom-Wang898/memory-runtime?display_name=tag)](https://github.com/Tom-Wang898/memory-runtime/releases)
