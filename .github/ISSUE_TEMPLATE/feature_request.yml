@@ -1,0 +1,41 @@
+name: Feature request
+description: Propose a new capability or integration
+title: "[Feature]: "
+labels:
+  - enhancement
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem are you trying to solve?
+      description: Start with the real workflow problem, not the implementation.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: Explain the desired behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: constraints
+    attributes:
+      label: Constraints and non-goals
+      description: Mention token budget, host support, security, or fail-open requirements.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Host wrappers
+        - Hot memory
+        - Cold memory
+        - Docker deployment
+        - Docs / onboarding
+        - Benchmarks / evaluation
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: List any current workaround or competing approach you already tested.

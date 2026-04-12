@@ -1,0 +1,27 @@
+{
+  "name": "memory-runtime",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Hot/cold memory runtime for CLI agents.",
+  "license": "MIT",
+  "type": "module",
+  "packageManager": "npm@11.8.0",
+  "engines": {
+    "node": ">=22.0.0",
+    "npm": ">=10.0.0"
+  },
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "check:scaffold": "node ./scripts/check-scaffold.mjs",
+    "check:imports": "node ./scripts/check-imports.mjs",
+    "check:install": "./scripts/check-shell-install.sh",
+    "check:cold-docker": "./scripts/check-memory-palace-docker-install.sh",
+    "check:hot-memory": "node --experimental-strip-types --loader ./scripts/ts-local-loader.mjs ./scripts/smoke-hot-memory.ts",
+    "check:test": "node --experimental-strip-types --loader ./scripts/ts-local-loader.mjs --test ./tests/**/*.test.ts",
+    "check:all": "npm run check:scaffold && npm run check:imports && npm run check:install && npm run check:cold-docker && npm run check:hot-memory && npm run check:test",
+    "bench:bootstrap": "node --experimental-strip-types --loader ./scripts/ts-local-loader.mjs ./benchmarks/run-bootstrap-benchmark.ts",
+    "bench:tokens": "node --experimental-strip-types --loader ./scripts/ts-local-loader.mjs ./benchmarks/run-token-savings-benchmark.ts"
+  }
+}

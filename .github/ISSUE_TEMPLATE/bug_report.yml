@@ -1,0 +1,55 @@
+name: Bug report
+description: Report a reproducible runtime, wrapper, or install problem
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: What broke?
+      description: Describe the bug in one short paragraph.
+      placeholder: After installing shell integration, codex wrapper no longer starts correctly.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Reproduction steps
+      description: Give exact steps and commands.
+      placeholder: |
+        1. Run ...
+        2. Open a new shell ...
+        3. Run ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Include host CLI, shell, OS, Node version, and whether cold memory uses Docker.
+      placeholder: |
+        - Host: Codex
+        - Shell: zsh
+        - OS: macOS 15
+        - Node: 25.6.0
+        - Cold memory: Docker backend-only
+    validations:
+      required: true
+  - type: textarea
+    id: verification
+    attributes:
+      label: Verification output
+      description: Paste the output of `npm run check:all` or the most relevant failing command if available.

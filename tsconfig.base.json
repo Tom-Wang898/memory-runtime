@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "declaration": true,
+    "strict": true,
+    "noEmit": true,
+    "baseUrl": ".",
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "paths": {
+      "@memory-runtime/memory-core": ["packages/memory-core/src/index.ts"],
+      "@memory-runtime/hot-memory-sqlite": ["packages/hot-memory-sqlite/src/index.ts"],
+      "@memory-runtime/cold-memory-memory-palace": ["packages/cold-memory-memory-palace/src/index.ts"],
+      "@memory-runtime/cold-memory-fixture": ["packages/cold-memory-fixture/src/index.ts"],
+      "@memory-runtime/host-codex": ["packages/host-codex/src/index.ts"],
+      "@memory-runtime/host-claude": ["packages/host-claude/src/index.ts"],
+      "@memory-runtime/mcp-bridge": ["packages/mcp-bridge/src/index.ts"]
+    }
+  }
+}
