@@ -4,6 +4,19 @@ All notable changes to this project will be documented here.
 
 The format is inspired by Keep a Changelog.
 
+## [Unreleased]
+
+### Added
+
+- GitHub Actions CI workflow for push and pull request verification
+- repo hero SVG for README and GitHub social preview upload
+- social preview guidance and Discussions recommendation
+
+### Changed
+
+- README now uses a stronger homepage hero with badges
+- GitHub metadata now includes a clear Discussions policy for the alpha phase
+
 ## [0.1.0-alpha] - 2026-04-12
 
 ### Added

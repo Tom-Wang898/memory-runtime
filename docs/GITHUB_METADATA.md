@@ -53,3 +53,19 @@ Good first lines for the repo page:
 1. `Hot/cold memory runtime for CLI agents.`
 2. `Saves tokens without rewriting the user prompt.`
 3. `Works with Codex, Claude, and Gemini.`
+
+## Discussions recommendation
+
+For `v0.1.0-alpha`, keep `Discussions` off.
+
+Reason:
+
+- first-wave feedback is better kept inside `Issues`
+- the repo is still shaping the core install and runtime loop
+- support and bug traffic are likely still low enough not to need a second channel
+
+Revisit this after:
+
+- a few external users have tried the install flow
+- you start seeing repeated support questions
+- feature ideation begins to pollute bug reports

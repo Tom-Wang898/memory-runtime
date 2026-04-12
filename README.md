@@ -1,5 +1,12 @@
 # memory-runtime
 
+![memory-runtime social preview](./assets/social-preview.svg)
+
+[![CI](https://github.com/Tom-Wang898/memory-runtime/actions/workflows/ci.yml/badge.svg)](https://github.com/Tom-Wang898/memory-runtime/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/Tom-Wang898/memory-runtime?display_name=tag)](https://github.com/Tom-Wang898/memory-runtime/releases)
+[![License: MIT](https://img.shields.io/badge/license-MIT-6BE1C6.svg)](./LICENSE)
+[![Node 22+](https://img.shields.io/badge/node-22%2B-5FA04E.svg)](./package.json)
+
 `memory-runtime` is a hot/cold memory runtime for CLI agents.
 
 It is designed to save tokens without rewriting the user request, stay fail-open
@@ -192,6 +199,7 @@ npm run bench:tokens
 - `docs/DATA_CONTRACTS.md`
 - `docs/CONFIGURATION.md`
 - `docs/SAFETY.md`
+- `docs/SOCIAL_PREVIEW.md`
 - `docs/TROUBLESHOOTING.md`
 - `docs/OPEN_SOURCE.md`
 - `docs/RELEASE.md`

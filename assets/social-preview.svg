@@ -1,0 +1,64 @@
+<svg width="1280" height="640" viewBox="0 0 1280 640" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1280" height="640" fill="#0B1020"/>
+  <rect x="0" y="0" width="1280" height="640" fill="url(#bg)"/>
+  <g opacity="0.18">
+    <path d="M0 96H1280" stroke="#9FB0FF" stroke-width="1"/>
+    <path d="M0 192H1280" stroke="#9FB0FF" stroke-width="1"/>
+    <path d="M0 288H1280" stroke="#9FB0FF" stroke-width="1"/>
+    <path d="M0 384H1280" stroke="#9FB0FF" stroke-width="1"/>
+    <path d="M0 480H1280" stroke="#9FB0FF" stroke-width="1"/>
+    <path d="M0 576H1280" stroke="#9FB0FF" stroke-width="1"/>
+    <path d="M160 0V640" stroke="#9FB0FF" stroke-width="1"/>
+    <path d="M320 0V640" stroke="#9FB0FF" stroke-width="1"/>
+    <path d="M480 0V640" stroke="#9FB0FF" stroke-width="1"/>
+    <path d="M640 0V640" stroke="#9FB0FF" stroke-width="1"/>
+    <path d="M800 0V640" stroke="#9FB0FF" stroke-width="1"/>
+    <path d="M960 0V640" stroke="#9FB0FF" stroke-width="1"/>
+    <path d="M1120 0V640" stroke="#9FB0FF" stroke-width="1"/>
+  </g>
+
+  <rect x="72" y="72" width="620" height="496" rx="28" fill="#0F1630" fill-opacity="0.92" stroke="#6BE1C6" stroke-opacity="0.5"/>
+  <text x="116" y="150" fill="#6BE1C6" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="24" letter-spacing="0.14em">memory-runtime</text>
+  <text x="116" y="230" fill="#F7FAFF" font-family="Arial, Helvetica, sans-serif" font-size="76" font-weight="700">Hot/cold memory</text>
+  <text x="116" y="306" fill="#F7FAFF" font-family="Arial, Helvetica, sans-serif" font-size="76" font-weight="700">for CLI agents</text>
+  <text x="116" y="366" fill="#B8C5FF" font-family="Arial, Helvetica, sans-serif" font-size="28">Save tokens without rewriting the prompt.</text>
+
+  <g>
+    <rect x="116" y="418" width="178" height="44" rx="22" fill="#1B2754"/>
+    <text x="145" y="447" fill="#F7FAFF" font-family="Arial, Helvetica, sans-serif" font-size="22">Hot: SQLite</text>
+
+    <rect x="310" y="418" width="248" height="44" rx="22" fill="#1B2754"/>
+    <text x="338" y="447" fill="#F7FAFF" font-family="Arial, Helvetica, sans-serif" font-size="22">Cold: Memory Palace</text>
+
+    <rect x="116" y="480" width="278" height="44" rx="22" fill="#1B2754"/>
+    <text x="144" y="509" fill="#F7FAFF" font-family="Arial, Helvetica, sans-serif" font-size="22">Codex / Claude / Gemini</text>
+
+    <rect x="410" y="480" width="148" height="44" rx="22" fill="#1B2754"/>
+    <text x="444" y="509" fill="#F7FAFF" font-family="Arial, Helvetica, sans-serif" font-size="22">Fail-open</text>
+  </g>
+
+  <g>
+    <rect x="760" y="112" width="444" height="132" rx="26" fill="#121D42" fill-opacity="0.9" stroke="#9FB0FF" stroke-opacity="0.45"/>
+    <text x="796" y="160" fill="#F7FAFF" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="22">$ codex "fix the auth flow"</text>
+    <text x="796" y="198" fill="#B8C5FF" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="20">bootstrap: compact context loaded</text>
+    <text x="796" y="230" fill="#6BE1C6" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="20">source: hot + cold</text>
+
+    <rect x="760" y="272" width="444" height="132" rx="26" fill="#121D42" fill-opacity="0.9" stroke="#9FB0FF" stroke-opacity="0.45"/>
+    <text x="796" y="320" fill="#F7FAFF" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="22">docker-ready cold memory</text>
+    <text x="796" y="358" fill="#B8C5FF" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="20">backend-only install path</text>
+    <text x="796" y="390" fill="#6BE1C6" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="20">projects domain enabled</text>
+
+    <rect x="760" y="432" width="444" height="132" rx="26" fill="#121D42" fill-opacity="0.9" stroke="#9FB0FF" stroke-opacity="0.45"/>
+    <text x="796" y="480" fill="#F7FAFF" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="22">strict prompt safety</text>
+    <text x="796" y="518" fill="#B8C5FF" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="20">never rewrites the user request</text>
+    <text x="796" y="550" fill="#6BE1C6" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="20">inject less when risk is high</text>
+  </g>
+
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1280" y2="640" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0E1734"/>
+      <stop offset="0.55" stop-color="#0A1227"/>
+      <stop offset="1" stop-color="#16264B"/>
+    </linearGradient>
+  </defs>
+</svg>
