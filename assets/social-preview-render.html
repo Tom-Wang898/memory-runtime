@@ -1,0 +1,133 @@
+<!doctype html>
+<html>
+  <body style="margin:0;background:#08101f">
+    <canvas id="c" width="1280" height="640"></canvas>
+    <pre id="out" style="white-space:pre-wrap;word-break:break-all"></pre>
+    <script>
+      const canvas = document.getElementById('c');
+      const ctx = canvas.getContext('2d');
+
+      const roundRect = (x, y, w, h, r, fillStyle, strokeStyle = null, lineWidth = 1) => {
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.arcTo(x + w, y, x + w, y + h, r);
+        ctx.arcTo(x + w, y + h, x, y + h, r);
+        ctx.arcTo(x, y + h, x, y, r);
+        ctx.arcTo(x, y, x + w, y, r);
+        ctx.closePath();
+        if (fillStyle) {
+          ctx.fillStyle = fillStyle;
+          ctx.fill();
+        }
+        if (strokeStyle) {
+          ctx.strokeStyle = strokeStyle;
+          ctx.lineWidth = lineWidth;
+          ctx.stroke();
+        }
+      };
+
+      const pill = (x, y, text, width) => {
+        roundRect(x, y, width, 42, 21, 'rgba(45, 63, 136, 0.94)');
+        ctx.fillStyle = '#f6f8ff';
+        ctx.font = '700 16px Arial, Helvetica, sans-serif';
+        ctx.fillText(text, x + 20, y + 28);
+      };
+
+      const note = (x, y, title, lines) => {
+        roundRect(x, y, 400, 150, 24, 'rgba(21, 31, 69, 0.92)', 'rgba(159, 176, 255, 0.28)');
+        ctx.fillStyle = '#f6f8ff';
+        ctx.font = '700 18px Menlo, ui-monospace, monospace';
+        ctx.fillText(title, x + 28, y + 44);
+        let cursorY = y + 80;
+        for (const line of lines) {
+          ctx.fillStyle = line.accent ? '#6be1c6' : '#b8c5ff';
+          ctx.font = `${line.accent ? '700' : '500'} 15px Menlo, ui-monospace, monospace`;
+          ctx.fillText(line.text, x + 28, cursorY);
+          cursorY += 28;
+        }
+      };
+
+      const draw = () => {
+        ctx.clearRect(0, 0, 1280, 640);
+        ctx.fillStyle = '#08101f';
+        ctx.fillRect(0, 0, 1280, 640);
+
+        const img = new Image();
+        img.onload = () => {
+          ctx.drawImage(img, 0, 0, 1280, 640);
+
+          const gradient = ctx.createLinearGradient(0, 0, 1280, 0);
+          gradient.addColorStop(0, 'rgba(8,16,31,0.74)');
+          gradient.addColorStop(0.34, 'rgba(8,16,31,0.56)');
+          gradient.addColorStop(0.58, 'rgba(8,16,31,0.16)');
+          gradient.addColorStop(1, 'rgba(8,16,31,0.28)');
+          ctx.fillStyle = gradient;
+          ctx.fillRect(0, 0, 1280, 640);
+
+          const bottomGlowA = ctx.createRadialGradient(180, 600, 10, 180, 600, 200);
+          bottomGlowA.addColorStop(0, 'rgba(107,225,198,0.22)');
+          bottomGlowA.addColorStop(1, 'rgba(107,225,198,0)');
+          ctx.fillStyle = bottomGlowA;
+          ctx.fillRect(0, 460, 520, 180);
+
+          const bottomGlowB = ctx.createRadialGradient(980, 590, 10, 980, 590, 220);
+          bottomGlowB.addColorStop(0, 'rgba(121,151,255,0.18)');
+          bottomGlowB.addColorStop(1, 'rgba(121,151,255,0)');
+          ctx.fillStyle = bottomGlowB;
+          ctx.fillRect(760, 430, 520, 210);
+
+          ctx.strokeStyle = 'rgba(159,176,255,0.10)';
+          ctx.lineWidth = 1;
+          for (let y = 500; y <= 620; y += 38) {
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(1280, y);
+            ctx.stroke();
+          }
+          for (let x = 40; x <= 1240; x += 64) {
+            ctx.beginPath();
+            ctx.moveTo(x, 500);
+            ctx.lineTo(x, 640);
+            ctx.stroke();
+          }
+
+          roundRect(58, 42, 592, 560, 30, 'rgba(14, 22, 47, 0.88)', 'rgba(107, 225, 198, 0.34)');
+
+          ctx.fillStyle = '#6be1c6';
+          ctx.font = '23px Menlo, ui-monospace, monospace';
+          ctx.fillText('memory-runtime', 112, 108);
+
+          ctx.fillStyle = '#f6f8ff';
+          ctx.font = '800 58px Arial, Helvetica, sans-serif';
+          ctx.fillText('Hot/cold memory', 110, 200);
+          ctx.fillText('for CLI agents', 110, 278);
+
+          ctx.fillStyle = '#c0cbff';
+          ctx.font = '600 22px Arial, Helvetica, sans-serif';
+          ctx.fillText('Save tokens without rewriting the prompt.', 112, 390);
+
+          pill(110, 470, 'Hot: SQLite', 142);
+          pill(266, 470, 'Cold: Memory Palace', 202);
+          pill(110, 528, 'Codex / Claude / Gemini', 250);
+          pill(374, 528, 'Fail-open', 126);
+
+          note(802, 110, '$ codex "fix the auth flow"', [
+            { text: 'bootstrap: compact context loaded' },
+            { text: 'source: hot + cold', accent: true },
+          ]);
+
+          note(802, 318, 'strict, fail-open memory', [
+            { text: 'backend-only cold memory path' },
+            { text: 'never rewrites the user request' },
+            { text: 'inject less when risk is high', accent: true },
+          ]);
+
+          document.getElementById('out').textContent = canvas.toDataURL('image/png');
+        };
+        img.src = 'http://127.0.0.1:39091/assets/social-preview-background.png';
+      };
+
+      draw();
+    </script>
+  </body>
+</html>

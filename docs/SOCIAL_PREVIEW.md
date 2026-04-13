@@ -1,10 +1,19 @@
 # Social Preview
 
-This repo now includes a ready-to-upload social preview asset:
+This repo now includes two final social preview outputs:
 
+- `assets/social-preview-github-4x3-upload.jpg`
+  final GitHub `Settings -> Social preview` upload asset (sub-1MB)
+- `assets/social-preview-github-4x3.png`
+  high-quality 4:3 master export
 - `assets/social-preview-github.png`
-- source composition: `assets/social-preview-compose.html`
-- background image: `assets/social-preview-background.png`
+  standard wide social card backup for README or external sharing
+- `assets/social-preview-render-4x3.html`
+  render source for the 4:3 GitHub preview version
+- `assets/social-preview-render.html`
+  render source for the standard wide version
+- `assets/social-preview-background.png`
+  shared background image
 
 ## Why this exists
 
@@ -48,11 +57,15 @@ The current SVG uses:
 - right column for three proof blocks
 - dark technical palette with mint and blue accents
 
-Canvas size:
+Canvas sizes:
 
-- `1280 x 640`
+- `1024 x 768` equivalent aspect via `assets/social-preview-github-4x3.png`
+- `1280 x 640` wide version via `assets/social-preview-github.png`
 
-That size works well for GitHub social preview uploads and README hero display.
+Why two versions exist:
+
+- GitHub's backend preview container visually favors a taller frame
+- external social cards usually favor a wider 2:1 style image
 
 ## How to use it
 
@@ -61,11 +74,13 @@ That size works well for GitHub social preview uploads and README hero display.
 1. Open repository `Settings`
 2. Go to `General`
 3. Find `Social preview`
-4. Upload `assets/social-preview-github.png`
+4. Upload `assets/social-preview-github-4x3-upload.jpg`
 
 ### README hero
 
-The README now references the same final PNG directly from the repo.
+The README can keep using the wide version:
+
+- `assets/social-preview-github.png`
 
 ## Discussions recommendation
 
