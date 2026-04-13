@@ -63,6 +63,7 @@ export const resolveCheckpointSummary = (
 
 export const toProjectIdentity = (row: ProjectStateRow): ProjectIdentity => ({
   id: row.project_id,
+  memoryNamespace: null,
   rootPath: row.root_path,
   host: row.host,
   vcsRoot: row.vcs_root,

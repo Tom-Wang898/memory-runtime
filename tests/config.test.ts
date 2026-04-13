@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 
-import { resolveMemoryPalaceBackendRoot } from "../scripts/config.ts";
+import { detectProjectIdentity, resolveMemoryPalaceBackendRoot } from "../scripts/config.ts";
 
 const withEnv = async (
   values: Record<string, string | undefined>,
@@ -90,6 +90,20 @@ test("resolveMemoryPalaceBackendRoot returns null when no backend is available",
         assert.equal(resolveMemoryPalaceBackendRoot(), null);
       },
     );
+  } finally {
+    rmSync(sandboxRoot, { recursive: true, force: true });
+  }
+});
+
+test("detectProjectIdentity derives memory namespace from override file", async () => {
+  const sandboxRoot = mkdtempSync(join(tmpdir(), "memory-runtime-identity-"));
+  try {
+    writeFileSync(
+      join(sandboxRoot, ".memory-palace-project.json"),
+      JSON.stringify({ project_slug: "demo-manual-slug" }),
+    );
+    const identity = detectProjectIdentity(sandboxRoot, "codex");
+    assert.equal(identity.memoryNamespace, "demo-manual-slug");
   } finally {
     rmSync(sandboxRoot, { recursive: true, force: true });
   }

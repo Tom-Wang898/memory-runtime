@@ -15,6 +15,10 @@ interface SearchResponse {
   readonly results?: readonly Record<string, unknown>[];
 }
 
+interface BrowseNodeResponse {
+  readonly node?: Record<string, unknown>;
+}
+
 const createHeaders = (
   config: MemoryPalaceHttpClientConfig,
   contentType = true,
@@ -58,6 +62,33 @@ const toFactHit = (item: Record<string, unknown>): FactHit => ({
   sourceUri: String(item.uri ?? ""),
   score: Number(item.score ?? 0),
 });
+
+const trimText = (value: string, limit: number): string => {
+  const normalized = String(value ?? "").replace(/\s+/g, " ").trim();
+  if (normalized.length <= limit) {
+    return normalized;
+  }
+  return `${normalized.slice(0, Math.max(0, limit - 1)).trim()}…`;
+};
+
+const toPrimerFactHit = (item: Record<string, unknown>): FactHit | null => {
+  const uri = String(item.uri ?? "").trim();
+  if (!uri) {
+    return null;
+  }
+  const gistText = String(item.gist_text ?? "").trim();
+  const content = String(item.content ?? "").trim();
+  const summary = trimText(gistText || content, 240);
+  if (!summary) {
+    return null;
+  }
+  return {
+    id: uri,
+    summary,
+    sourceUri: uri,
+    score: 1,
+  };
+};
 
 const slugify = (value: string): string =>
   value
@@ -120,6 +151,45 @@ const searchViaMaintenance = async (
     .filter((item): item is Record<string, unknown> => Boolean(item))
     .map((item) => toFactHit(item))
     .filter((item) => item.summary.trim().length > 0);
+};
+
+const readBrowseNode = async (
+  config: MemoryPalaceHttpClientConfig,
+  domain: string,
+  path: string,
+): Promise<Record<string, unknown> | null> => {
+  const url = buildUrl(
+    config,
+    `/browse/node?domain=${encodeURIComponent(domain)}&path=${encodeURIComponent(path)}`,
+  );
+  const response = await withTimeout(config, url, {
+    method: "GET",
+    headers: createHeaders(config, false),
+  });
+  if (!response.ok) {
+    return null;
+  }
+  const payload = (await readJson(response)) as BrowseNodeResponse;
+  if (!payload.node || typeof payload.node !== "object") {
+    return null;
+  }
+  return payload.node;
+};
+
+const readProjectPrimer = async (
+  config: MemoryPalaceHttpClientConfig,
+  projectId: string,
+): Promise<readonly FactHit[]> => {
+  const domain = config.promotionDomain ?? "projects";
+  const digestNode = await readBrowseNode(config, domain, `${projectId}/digest/current`);
+  const anchorNode = await readBrowseNode(config, domain, `${projectId}/anchors/current`);
+  const overviewNode = digestNode
+    ? null
+    : await readBrowseNode(config, domain, `${projectId}/overview`);
+  return [digestNode, anchorNode, overviewNode]
+    .filter((item): item is Record<string, unknown> => Boolean(item))
+    .map((item) => toPrimerFactHit(item))
+    .filter((item): item is FactHit => Boolean(item));
 };
 
 const loadExistingPromotionPath = async (
@@ -218,6 +288,7 @@ const writePromotion = async (
 };
 
 export interface MemoryPalaceClient {
+  readProjectPrimer(projectId: string): Promise<readonly FactHit[]>;
   searchFacts(projectId: string, query: string): Promise<readonly FactHit[]>;
   searchGists(projectId: string, query: string): Promise<readonly FactHit[]>;
   promote(record: PromotionRecord): Promise<void>;
@@ -226,6 +297,7 @@ export interface MemoryPalaceClient {
 export const createMemoryPalaceHttpClient = (
   config: MemoryPalaceHttpClientConfig,
 ): MemoryPalaceClient => ({
+  readProjectPrimer: async (projectId) => readProjectPrimer(config, projectId),
   searchFacts: async (projectId, query) =>
     searchViaMaintenance(config, query, "snippet", `projects://${projectId}`),
   searchGists: async (projectId, query) =>

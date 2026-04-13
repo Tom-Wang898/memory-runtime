@@ -11,3 +11,4 @@ Current runners:
 
 - `npm run bench:bootstrap`
 - `npm run bench:tokens`
+- `npm run bench:skills-governance`

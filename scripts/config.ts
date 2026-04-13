@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, openSync } from "node:fs";
+import { existsSync, mkdirSync, openSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { basename, join, resolve as resolvePath } from "node:path";
 import { execFileSync, spawn } from "node:child_process";
@@ -39,6 +39,11 @@ const slugify = (value: string): string =>
 
 const shortHash = (value: string): string =>
   createHash("sha1").update(value).digest("hex").slice(0, 8);
+
+const PROJECT_OVERRIDE_FILES = [
+  ".memory-palace-project.json",
+  ".project-memory.json",
+] as const;
 
 const resolveGitRoot = (cwd: string): string | null => {
   try {
@@ -179,6 +184,53 @@ const buildProjectId = (rootPath: string): string => {
   return `${name}-${shortHash(rootPath)}`;
 };
 
+const loadProjectOverride = (rootPath: string): Record<string, unknown> => {
+  for (const fileName of PROJECT_OVERRIDE_FILES) {
+    const candidate = resolvePath(rootPath, fileName);
+    if (!existsSync(candidate)) {
+      continue;
+    }
+    try {
+      return JSON.parse(readFileSync(candidate, "utf8")) as Record<string, unknown>;
+    } catch {
+      return {};
+    }
+  }
+  return {};
+};
+
+const resolveGitRemoteSlug = (rootPath: string): string | null => {
+  try {
+    const remote = execFileSync(
+      "git",
+      ["-C", rootPath, "remote", "get-url", "origin"],
+      {
+        encoding: "utf8",
+        stdio: ["ignore", "pipe", "ignore"],
+      },
+    ).trim();
+    if (!remote) {
+      return null;
+    }
+    const tail = remote.replace(/\/+$/, "").split("/").at(-1) ?? "";
+    const candidate = tail.includes(":") ? tail.split(":").at(-1) ?? tail : tail;
+    const slug = slugify(candidate.replace(/\.git$/i, ""));
+    return slug || null;
+  } catch {
+    return null;
+  }
+};
+
+const resolveMemoryNamespace = (rootPath: string): string => {
+  const override = loadProjectOverride(rootPath);
+  const explicit = slugify(String(override.project_slug ?? ""));
+  if (explicit) {
+    return explicit;
+  }
+  const fallbackSlug = slugify(basename(rootPath)) || "project";
+  return resolveGitRemoteSlug(rootPath) ?? fallbackSlug;
+};
+
 export const detectProjectIdentity = (
   cwd: string,
   host: string | null,
@@ -187,6 +239,7 @@ export const detectProjectIdentity = (
   const rootPath = vcsRoot ?? resolvePath(cwd);
   return {
     id: buildProjectId(rootPath),
+    memoryNamespace: resolveMemoryNamespace(rootPath),
     rootPath,
     host,
     vcsRoot,
@@ -210,6 +263,7 @@ const buildColdProvider = (project: ProjectIdentity) => {
     promotionDomain: process.env.MEMORY_RUNTIME_MP_PROMOTION_DOMAIN ?? "projects",
     promotionParentPath:
       process.env.MEMORY_RUNTIME_MP_PROMOTION_PARENT_PATH ??
+      project.memoryNamespace ??
       project.id,
   });
 };

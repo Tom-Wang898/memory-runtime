@@ -26,12 +26,14 @@ This repo is ready for public GitHub use as an `0.x` GitHub-first runtime:
 - shell integration can be installed with one command
 - cold-memory autostart is optional and fail-open
 - ambiguous short references are anchor-expanded or cold-recall-suppressed
+- local skill governance supports audit, explicit apply, rollback, and benchmark flows
 
 The current distribution model is:
 
 - clone from GitHub
 - run locally
 - install shell integration into `zsh` or `bash`
+- optionally audit, apply, rollback, and benchmark local skill governance
 
 It is not an npm-published product yet.
 
@@ -109,6 +111,53 @@ hmctl bootstrap --cwd "$(pwd)" --mode warm --query "runtime smoke test" --json
 If you stop here, the runtime already works in hot-memory mode and will fail open
 if cold memory is unavailable.
 
+5. Optional: audit local skills without editing them:
+
+```bash
+hmctl skills-audit
+```
+
+You can also point it at one explicit tree:
+
+```bash
+hmctl skills-audit --root "$HOME/.codex/skills" --json
+```
+
+6. Optional: generate a safe mutation plan first:
+
+```bash
+hmctl skills-plan --root "$HOME/.codex/skills" --host codex
+```
+
+7. Optional: apply managed changes with an automatic snapshot:
+
+```bash
+hmctl skills-apply --root "$HOME/.codex/skills" --host codex
+```
+
+8. Optional: rollback from a snapshot:
+
+```bash
+hmctl skills-rollback --snapshot "$HOME/.memory-runtime/skill-governance/snapshots/<snapshot>.json"
+```
+
+9. Optional: export duplicate-skill decisions:
+
+```bash
+hmctl skills-duplicates --root "$HOME/.codex/skills" --decision-out /tmp/duplicate-decisions.json
+```
+
+10. Optional: apply duplicate decisions without deleting files:
+
+```bash
+hmctl skills-duplicates-apply --decision-file /tmp/duplicate-decisions.json
+```
+
+You can edit the exported decision file first.
+Set `action` to `skip` if a duplicate group should remain untouched.
+The duplicate report now includes per-path status and token metadata, and apply results include before/after deltas.
+Duplicate groups are now ordered by review risk so the ugliest sets float to the top first.
+
 ## Optional cold-memory setup
 
 Cold memory uses Memory Palace.
@@ -177,9 +226,18 @@ The shell installer injects a managed block into your shell rc file and wires:
 The wrappers:
 
 - inject compact bootstrap context before a session starts
+- prefer project hot-layer memory from `projects://<slug>/digest/current` and `projects://<slug>/anchors/current` when the cold backend provides them
 - keep the raw user prompt intact
 - write a lightweight checkpoint after the wrapped command exits
 - avoid polluting hot memory with synthetic wrapper summaries
+
+The skill audit companion:
+
+- scans local skill trees only when you call it
+- reports token-heavy and host-coupled skills
+- supports explicit apply and rollback with snapshots
+- supports explicit duplicate review and quarantine decisions
+- does not auto-edit private skill directories unless you run `skills-apply`
 
 ## Validation
 
@@ -194,6 +252,7 @@ Optional benchmarks:
 ```bash
 npm run bench:bootstrap
 npm run bench:tokens
+npm run bench:skills-governance
 ```
 
 ## Repository docs
@@ -207,3 +266,4 @@ npm run bench:tokens
 - `docs/TROUBLESHOOTING.md`
 - `docs/OPEN_SOURCE.md`
 - `docs/RELEASE.md`
+- `docs/SKILL_GOVERNANCE.md`

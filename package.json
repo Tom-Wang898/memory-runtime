@@ -22,6 +22,7 @@
     "check:test": "node --experimental-strip-types --loader ./scripts/ts-local-loader.mjs --test ./tests/**/*.test.ts",
     "check:all": "npm run check:scaffold && npm run check:imports && npm run check:install && npm run check:cold-docker && npm run check:hot-memory && npm run check:test",
     "bench:bootstrap": "node --experimental-strip-types --loader ./scripts/ts-local-loader.mjs ./benchmarks/run-bootstrap-benchmark.ts",
-    "bench:tokens": "node --experimental-strip-types --loader ./scripts/ts-local-loader.mjs ./benchmarks/run-token-savings-benchmark.ts"
+    "bench:tokens": "node --experimental-strip-types --loader ./scripts/ts-local-loader.mjs ./benchmarks/run-token-savings-benchmark.ts",
+    "bench:skills-governance": "node --experimental-strip-types --loader ./scripts/ts-local-loader.mjs ./benchmarks/run-skills-governance-benchmark.ts"
   }
 }

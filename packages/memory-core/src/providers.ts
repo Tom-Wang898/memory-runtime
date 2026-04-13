@@ -14,6 +14,7 @@ export interface HotMemoryProvider {
 }
 
 export interface ColdMemoryProvider {
+  readProjectPrimer?(projectId: string): Promise<readonly FactHit[]>;
   searchFacts(projectId: string, query: string): Promise<readonly FactHit[]>;
   searchGists(projectId: string, query: string): Promise<readonly FactHit[]>;
   promote(record: PromotionRecord): Promise<void>;

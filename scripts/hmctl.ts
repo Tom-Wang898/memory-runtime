@@ -12,6 +12,10 @@ import {
   normalizeMode,
 } from "./config.ts";
 import { buildCheckpointRecord, readJsonFromStdin } from "./project-context.ts";
+import {
+  isSkillsGovernanceCommand,
+  runSkillsGovernanceCommand,
+} from "./skills-governance-cli.ts";
 
 interface ParsedArgs {
   readonly command: string;
@@ -216,7 +220,14 @@ const runHelp = (): void => {
   inspect --cwd <dir>
   promote --cwd <dir> [--title <text>] [--async]
   flush-promotions --cwd <dir>
-  metrics --cwd <dir>`);
+  metrics --cwd <dir>
+  skills-audit [--root <dir>] [--host <codex|claude|gemini|universal>] [--limit <n>] [--json] [--json-out <file>] [--markdown-out <file>]
+  skills-plan [--root <dir>] [--host <codex|claude|gemini|universal>] [--limit <n>] [--json] [--plan-out <file>]
+  skills-apply [--root <dir>] [--host <codex|claude|gemini|universal>] [--limit <n>] [--snapshot-out <file>] [--plan-out <file>] [--json]
+  skills-duplicates [--root <dir>] [--host <codex|claude|gemini|universal>] [--json] [--decision-out <file>] [--template-markdown-out <file>]
+  skills-duplicates-apply --decision-file <file> [--snapshot-out <file>] [--json]
+  skills-rollback --snapshot <file> [--force] [--json]
+  skills-benchmark [--root <dir>] [--host <codex|claude|gemini|universal>] [--limit <n>] [--json]`);
 };
 
 const main = async (): Promise<void> => {
@@ -244,6 +255,17 @@ const main = async (): Promise<void> => {
   }
   if (args.command === "metrics") {
     await runMetrics(cwd);
+    return;
+  }
+  if (isSkillsGovernanceCommand(args.command)) {
+    runSkillsGovernanceCommand({
+      command: args.command,
+      getValue: (key) => getValue(args, key),
+      getValues: (key) => getValues(args, key),
+      hasFlag: (key) => args.flags.has(key),
+      printOutput,
+      shouldOutputJson: shouldOutputJson(args),
+    });
     return;
   }
   if (args.command === "print-file") {

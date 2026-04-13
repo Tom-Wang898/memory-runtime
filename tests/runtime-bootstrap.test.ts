@@ -60,10 +60,105 @@ test("runtime bootstrap merges hot capsule with fixture cold facts", async () =>
       query: "wrapper",
     });
 
-    assert.equal(payload.capsule?.summary, "Demo project summary");
+    assert.match(payload.capsule?.summary ?? "", /Demo project summary/);
+    assert.match(
+      payload.capsule?.summary ?? "",
+      /Codex wrapper bootstrap should remain additive/,
+    );
     assert.equal(payload.capsule?.supportingFacts.length, 1);
     assert.equal(payload.diagnostics.coldRecallUsed, true);
     assert.equal(payload.diagnostics.recallQueryStrategy, "direct");
+  } finally {
+    hotClient.close();
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+test("runtime bootstrap injects project primer even without query", async () => {
+  const { directory, hotClient, runtime } = createRuntime();
+  try {
+    await runtime.checkpoint({
+      project: {
+        id: "demo-project",
+        rootPath: "/tmp/demo-project",
+        host: "codex",
+        vcsRoot: "/tmp/demo-project",
+      },
+      sessionId: "session-primer",
+      summary: "Demo project summary",
+      activeTask: "Open session",
+      openLoops: [],
+      recentDecisions: [],
+      workingSet: [],
+    });
+
+    const payload = await runtime.buildBootstrap({
+      project: {
+        id: "demo-project",
+        rootPath: "/tmp/demo-project",
+        host: "codex",
+        vcsRoot: "/tmp/demo-project",
+      },
+      mode: "warm",
+      query: null,
+    });
+
+    assert.match(payload.capsule?.summary ?? "", /Demo project summary/);
+    assert.match(
+      payload.capsule?.summary ?? "",
+      /Codex wrapper bootstrap should remain additive/,
+    );
+    assert.ok((payload.capsule?.supportingFacts.length ?? 0) >= 1);
+    assert.equal(
+      payload.capsule?.supportingFacts[0]?.summary,
+      "Codex wrapper bootstrap should remain additive.",
+    );
+    assert.equal(payload.diagnostics.coldRecallUsed, true);
+  } finally {
+    hotClient.close();
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+test("runtime bootstrap backfills capsule from project primer when hot capsule is missing", async () => {
+  const directory = mkdtempSync(join(tmpdir(), "memory-runtime-primer-only-"));
+  const hotClient = createSqliteHotMemoryClient({
+    databasePath: join(directory, "hot-memory.db"),
+  });
+  const runtime = new MemoryRuntime(
+    createSqliteHotMemoryProvider(hotClient),
+    {
+      readProjectPrimer: async () => [
+        {
+          id: "primer-only",
+          summary: "Digest-only primer summary",
+          sourceUri: "projects://demo-project/digest/current",
+          score: 1,
+        },
+      ],
+      searchFacts: async () => [],
+      searchGists: async () => [],
+      promote: async () => undefined,
+    },
+    undefined,
+    hotClient.createObserver(),
+  );
+  try {
+    const payload = await runtime.buildBootstrap({
+      project: {
+        id: "demo-project-hash",
+        memoryNamespace: "demo-project",
+        rootPath: "/tmp/demo-project",
+        host: "codex",
+        vcsRoot: "/tmp/demo-project",
+      },
+      mode: "warm",
+      query: "open project",
+    });
+
+    assert.equal(payload.capsule?.summary, "Digest-only primer summary");
+    assert.equal(payload.capsule?.supportingFacts.length, 1);
+    assert.equal(payload.fallbackNotes.length, 0);
   } finally {
     hotClient.close();
     rmSync(directory, { recursive: true, force: true });
@@ -100,12 +195,76 @@ test("high-risk bootstrap suppresses cold recall", async () => {
     });
 
     assert.equal(payload.capsule?.supportingFacts.length, 0);
-    assert.equal(payload.diagnostics.coldRecallAttempted, false);
+    assert.match(payload.capsule?.summary ?? "", /Codex wrapper bootstrap should remain additive/);
+    assert.equal(payload.diagnostics.coldRecallAttempted, true);
+    assert.equal(payload.diagnostics.coldRecallUsed, true);
     assert.equal(payload.diagnostics.recallQueryStrategy, "none");
   } finally {
     hotClient.close();
     rmSync(directory, { recursive: true, force: true });
   }
+});
+
+test("runtime bootstrap uses memory namespace for project primer lookup", async () => {
+  const directory = mkdtempSync(join(tmpdir(), "memory-runtime-namespace-"));
+  const hotClient = createSqliteHotMemoryClient({
+    databasePath: join(directory, "hot-memory.db"),
+  });
+  const primerProjectIds: string[] = [];
+  const runtime = new MemoryRuntime(
+    createSqliteHotMemoryProvider(hotClient),
+    {
+      readProjectPrimer: async (projectId) => {
+        primerProjectIds.push(projectId);
+        return [
+          {
+            id: "primer-1",
+            summary: "Digest primer",
+            sourceUri: `projects://${projectId}/digest/current`,
+            score: 1,
+          },
+        ];
+      },
+      searchFacts: async () => [],
+      searchGists: async () => [],
+      promote: async () => undefined,
+    },
+    undefined,
+    hotClient.createObserver(),
+  );
+  try {
+    await runtime.checkpoint({
+      project: {
+        id: "demo-project-1234",
+        memoryNamespace: "demo-project",
+        rootPath: "/tmp/demo-project",
+        host: "codex",
+        vcsRoot: "/tmp/demo-project",
+      },
+      sessionId: "session-namespace",
+      summary: "Namespace summary",
+      activeTask: "Use memory namespace",
+      openLoops: [],
+      recentDecisions: [],
+      workingSet: [],
+    });
+    await runtime.buildBootstrap({
+      project: {
+        id: "demo-project-1234",
+        memoryNamespace: "demo-project",
+        rootPath: "/tmp/demo-project",
+        host: "codex",
+        vcsRoot: "/tmp/demo-project",
+      },
+      mode: "warm",
+      query: null,
+    });
+  } finally {
+    hotClient.close();
+    rmSync(directory, { recursive: true, force: true });
+  }
+
+  assert.deepEqual(primerProjectIds, ["demo-project"]);
 });
 
 test("checkpoint merge keeps recent loops and decisions instead of wiping state", async () => {

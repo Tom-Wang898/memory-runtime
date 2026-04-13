@@ -24,6 +24,7 @@ const matchFacts = (
 export const createFixtureColdProvider = (
   config: FixtureColdMemoryConfig,
 ): ColdMemoryProvider => ({
+  readProjectPrimer: async (_projectId) => config.facts.slice(0, 2),
   searchFacts: async (_projectId, query) => matchFacts(config.facts, query),
   searchGists: async (_projectId, query) => matchFacts(config.facts, query),
   promote: async (_record: PromotionRecord) => undefined,

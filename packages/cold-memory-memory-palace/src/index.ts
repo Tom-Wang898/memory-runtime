@@ -22,6 +22,7 @@ export const createMemoryPalaceColdProvider = (
   client: MemoryPalaceClient,
   _config: MemoryPalaceAdapterConfig,
 ): ColdMemoryProvider => ({
+  readProjectPrimer: (projectId) => client.readProjectPrimer(projectId),
   searchFacts: (projectId, query) => client.searchFacts(projectId, query),
   searchGists: (projectId, query) => client.searchGists(projectId, query),
   promote: (record) => client.promote(record),
@@ -35,6 +36,7 @@ export const createMemoryPalaceColdProviderFromConfig = (
 export const createMemoryPalaceFixtureClient = (
   facts: readonly FactHit[],
 ): MemoryPalaceClient => ({
+  readProjectPrimer: async () => facts.slice(0, 2),
   searchFacts: async () => facts,
   searchGists: async () => facts,
   promote: async (_record: PromotionRecord) => undefined,

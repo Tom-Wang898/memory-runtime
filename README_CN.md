@@ -12,6 +12,7 @@
 - 自动方式：shell wrapper
 - 冷记忆 Docker：backend-only 一键部署
 - 模糊短指代保护：优先用热记忆锚点补全，没有锚点就抑制冷召回
+- skills 治理：支持审计、显式 apply、rollback、benchmark
 
 ## 适合谁
 
@@ -76,6 +77,53 @@ hmctl bootstrap --cwd "$(pwd)" --mode warm --query "runtime smoke test" --json
 ```
 
 如果到这一步就停，也已经能用热记忆模式。
+
+### 5. 可选：审计本地 skills，但不改文件
+
+```bash
+hmctl skills-audit
+```
+
+如果你只想扫 Codex skills：
+
+```bash
+hmctl skills-audit --root "$HOME/.codex/skills" --json
+```
+
+### 6. 可选：先生成变更计划
+
+```bash
+hmctl skills-plan --root "$HOME/.codex/skills" --host codex
+```
+
+### 7. 可选：显式应用治理规则，并自动生成快照
+
+```bash
+hmctl skills-apply --root "$HOME/.codex/skills" --host codex
+```
+
+### 8. 可选：按快照回滚
+
+```bash
+hmctl skills-rollback --snapshot "$HOME/.memory-runtime/skill-governance/snapshots/<snapshot>.json"
+```
+
+### 9. 可选：导出重复 skill 决策模板
+
+```bash
+hmctl skills-duplicates --root "$HOME/.codex/skills" --decision-out /tmp/duplicate-decisions.json
+```
+
+### 10. 可选：按决策文件显式处理重复项
+
+```bash
+hmctl skills-duplicates-apply --decision-file /tmp/duplicate-decisions.json
+```
+
+导出的决策文件可以先手工改。
+如果某组重复项暂时不想动，就把 `action` 改成 `skip`。
+重复项报告现在还会带每条路径的状态和 token 元信息，apply 结果会返回治理前后 delta。
+重复组现在还会按 review 风险排序，最该先处理的会优先浮到最上面。
 
 ## 冷记忆推荐接法
 
@@ -159,6 +207,7 @@ wrapper 应该只负责：
 
 - 读取配置
 - 注入 bootstrap
+- 如果冷后端可用，优先把 `projects://<slug>/digest/current` 和 `projects://<slug>/anchors/current` 这类项目热层一起带进 bootstrap
 - 失败时安静降级
 
 ### 为什么像“线路A / 方案B / 这个 / 那个”这种短指代不会再乱带偏？
@@ -181,6 +230,20 @@ projects://<project-id>/...
 
 你没有这个域，冷记忆 promotion 就会出问题。
 
+### 为什么它不会在安装后偷偷自动改我的 skills？
+
+因为公开仓库不能偷偷去改用户自己的 `~/.codex/skills`。
+
+现在这层支持：
+
+- 扫描
+- 显式 apply
+- rollback
+- benchmark
+- 重复项显式治理
+
+但默认安装后不会自己改，只有你明确执行 `skills-apply` 或 `skills-duplicates-apply` 才会动，并且会先写 snapshot。
+
 ## 进一步阅读
 
 - 英文版：`README.md`
@@ -189,3 +252,4 @@ projects://<project-id>/...
 - 配置：`docs/CONFIGURATION.md`
 - 排障：`docs/TROUBLESHOOTING.md`
 - 发布：`docs/RELEASE.md`
+- skills 治理：`docs/SKILL_GOVERNANCE.md`

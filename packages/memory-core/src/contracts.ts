@@ -16,6 +16,7 @@ export type RecallQueryStrategy = "none" | "direct" | "anchored" | "suppressed";
 
 export interface ProjectIdentity {
   readonly id: string;
+  readonly memoryNamespace?: string | null;
   readonly rootPath: string;
   readonly host: string | null;
   readonly vcsRoot: string | null;

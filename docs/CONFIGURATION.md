@@ -68,6 +68,21 @@ Recommended rule for Docker deployments:
 |---|---|---|
 | `MEMORY_RUNTIME_DISABLE` | `0` | If set to `1`, wrapper bypasses memory runtime and calls `codex` directly |
 
+## Skill governance
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `MEMORY_RUNTIME_SKILL_ROOTS` | empty | Optional path-delimited list of skill roots used by `hmctl skills-audit` instead of built-in defaults |
+
+Skill governance host profiles are selected per command with:
+
+```bash
+--host codex
+--host claude
+--host gemini
+--host universal
+```
+
 ## Recommended profiles
 
 ### Hot-only local setup

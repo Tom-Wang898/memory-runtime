@@ -35,6 +35,52 @@ test("memory palace client maps search results into fact hits", async () => {
   }
 });
 
+test("memory palace client reads project primer from digest and anchors", async () => {
+  const originalFetch = global.fetch;
+  const calls: string[] = [];
+  global.fetch = async (input) => {
+    const url = String(input);
+    calls.push(url);
+    if (url.includes("path=demo-project%2Fdigest%2Fcurrent")) {
+      return createJsonResponse({
+        node: {
+          uri: "projects://demo-project/digest/current",
+          gist_text: "Digest primer summary",
+          content: "Long digest body",
+        },
+      });
+    }
+    if (url.includes("path=demo-project%2Fanchors%2Fcurrent")) {
+      return createJsonResponse({
+        node: {
+          uri: "projects://demo-project/anchors/current",
+          content: "Current anchor title and mappings",
+        },
+      });
+    }
+    if (url.includes("path=demo-project%2Foverview")) {
+      return createJsonResponse({ detail: "not found" }, 404);
+    }
+    return createJsonResponse({ detail: "not found" }, 404);
+  };
+
+  try {
+    const client = createMemoryPalaceHttpClient({
+      baseUrl: "http://127.0.0.1:18000",
+    });
+    const results = await client.readProjectPrimer("demo-project");
+    assert.equal(results.length, 2);
+    assert.equal(results[0]?.summary, "Digest primer summary");
+    assert.match(results[1]?.summary ?? "", /Current anchor/);
+    assert.equal(
+      calls.some((item) => item.includes("path=demo-project%2Foverview")),
+      false,
+    );
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
+
 test("memory palace client promotes via create when node does not exist", async () => {
   const originalFetch = global.fetch;
   const calls: { url: string; method: string }[] = [];
