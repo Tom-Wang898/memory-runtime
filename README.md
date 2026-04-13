@@ -168,6 +168,8 @@ hmctl public-export --profile memory-palace-project-tools --source /path/to/Memo
 
 That command only copies allowlisted files, replaces machine-specific paths with placeholders such as `${HOME}` and `${CODEX_REPO_ROOT}`, and fails if a private absolute path marker survives redaction.
 
+See `docs/PUBLIC_EXPORT.md` for the full staging and mirror workflow.
+
 ## Optional cold-memory setup
 
 Cold memory uses Memory Palace.
@@ -271,6 +273,7 @@ npm run bench:skills-governance
 - `docs/COLD_MEMORY_DOCKER.md`
 - `docs/DATA_CONTRACTS.md`
 - `docs/CONFIGURATION.md`
+- `docs/PUBLIC_EXPORT.md`
 - `docs/SAFETY.md`
 - `docs/SOCIAL_PREVIEW.md`
 - `docs/TROUBLESHOOTING.md`

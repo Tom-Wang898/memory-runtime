@@ -23,6 +23,7 @@
 ## Sanitized export profiles
 
 Use `hmctl public-export --list-profiles` to inspect the built-in profiles.
+For the full staging flow, see `docs/PUBLIC_EXPORT.md`.
 
 Current profiles:
 

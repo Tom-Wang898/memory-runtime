@@ -139,6 +139,8 @@ hmctl public-export --profile memory-palace-project-tools --source /path/to/Memo
 - 把机器相关路径替换成 `${HOME}`、`${CODEX_REPO_ROOT}`、`${MEMORY_PALACE_ROOT}` 这类占位符
 - 如果还有绝对私有路径没脱掉，直接报错，不继续导出
 
+完整流程见：`docs/PUBLIC_EXPORT.md`
+
 ## 冷记忆推荐接法
 
 ### 方案 A：已经有 Memory Palace
@@ -264,6 +266,7 @@ projects://<project-id>/...
 - 架构：`docs/ARCHITECTURE.md`
 - Docker 冷记忆：`docs/COLD_MEMORY_DOCKER.md`
 - 配置：`docs/CONFIGURATION.md`
+- 公开导出：`docs/PUBLIC_EXPORT.md`
 - 排障：`docs/TROUBLESHOOTING.md`
 - 发布：`docs/RELEASE.md`
 - skills 治理：`docs/SKILL_GOVERNANCE.md`
