@@ -1,5 +1,4 @@
 import { readFileSync } from "node:fs";
-
 import { renderCodexBootstrap } from "../packages/host-codex/src/index.ts";
 import type {
   BootstrapPayload,
@@ -16,6 +15,10 @@ import {
   isSkillsGovernanceCommand,
   runSkillsGovernanceCommand,
 } from "./skills-governance-cli.ts";
+import {
+  exportPublicProfile,
+  listPublicExportProfiles,
+} from "./public-export.ts";
 
 interface ParsedArgs {
   readonly command: string;
@@ -213,6 +216,30 @@ const runMetrics = async (cwd: string): Promise<void> => {
   }
 };
 
+const runPublicExport = async (args: ParsedArgs): Promise<void> => {
+  if (args.flags.has("list-profiles")) {
+    printOutput(listPublicExportProfiles(), true);
+    return;
+  }
+  const profileName = getValue(args, "profile") ?? null;
+  const sourceRoot = getValue(args, "source") ?? null;
+  const outputRoot = getValue(args, "output") ?? null;
+  if (profileName === null || sourceRoot === null || outputRoot === null) {
+    throw new Error(
+      "public-export requires --profile, --source, and --output.",
+    );
+  }
+  printOutput(
+    exportPublicProfile({
+      profileName,
+      sourceRoot,
+      outputRoot,
+      dryRun: args.flags.has("dry-run"),
+    }),
+    true,
+  );
+};
+
 const runHelp = (): void => {
   console.log(`hmctl commands:
   bootstrap --cwd <dir> [--query <text>] [--mode fast|warm|cold] [--json]
@@ -227,34 +254,26 @@ const runHelp = (): void => {
   skills-duplicates [--root <dir>] [--host <codex|claude|gemini|universal>] [--json] [--decision-out <file>] [--template-markdown-out <file>]
   skills-duplicates-apply --decision-file <file> [--snapshot-out <file>] [--json]
   skills-rollback --snapshot <file> [--force] [--json]
-  skills-benchmark [--root <dir>] [--host <codex|claude|gemini|universal>] [--limit <n>] [--json]`);
+  skills-benchmark [--root <dir>] [--host <codex|claude|gemini|universal>] [--limit <n>] [--json]
+  public-export --profile <name> --source <dir> --output <dir> [--dry-run]
+  public-export --list-profiles`);
 };
 
 const main = async (): Promise<void> => {
   const args = parseArgs(process.argv.slice(2));
   const cwd = getValue(args, "cwd") ?? process.cwd();
-  if (args.command === "bootstrap") {
-    await runBootstrap(cwd, args);
-    return;
-  }
-  if (args.command === "checkpoint") {
-    await runCheckpoint(cwd, args);
-    return;
-  }
-  if (args.command === "inspect") {
-    await runInspect(cwd, args);
-    return;
-  }
-  if (args.command === "promote") {
-    await runPromote(cwd, args);
-    return;
-  }
-  if (args.command === "flush-promotions") {
-    await runFlushPromotions(cwd);
-    return;
-  }
-  if (args.command === "metrics") {
-    await runMetrics(cwd);
+  const commandHandlers: Record<string, () => Promise<void>> = {
+    bootstrap: () => runBootstrap(cwd, args),
+    checkpoint: () => runCheckpoint(cwd, args),
+    inspect: () => runInspect(cwd, args),
+    promote: () => runPromote(cwd, args),
+    "flush-promotions": () => runFlushPromotions(cwd),
+    metrics: () => runMetrics(cwd),
+    "public-export": () => runPublicExport(args),
+  };
+  const handler = commandHandlers[args.command];
+  if (handler) {
+    await handler();
     return;
   }
   if (isSkillsGovernanceCommand(args.command)) {

@@ -158,6 +158,16 @@ Set `action` to `skip` if a duplicate group should remain untouched.
 The duplicate report now includes per-path status and token metadata, and apply results include before/after deltas.
 Duplicate groups are now ordered by review risk so the ugliest sets float to the top first.
 
+11. Optional: stage a sanitized public export from a private Codex or Memory Palace checkout:
+
+```bash
+hmctl public-export --list-profiles
+hmctl public-export --profile codex-project-memory --source /path/to/codex --output /tmp/codex-public-export
+hmctl public-export --profile memory-palace-project-tools --source /path/to/Memory-Palace --output /tmp/memory-palace-public-export
+```
+
+That command only copies allowlisted files, replaces machine-specific paths with placeholders such as `${HOME}` and `${CODEX_REPO_ROOT}`, and fails if a private absolute path marker survives redaction.
+
 ## Optional cold-memory setup
 
 Cold memory uses Memory Palace.

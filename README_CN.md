@@ -125,6 +125,20 @@ hmctl skills-duplicates-apply --decision-file /tmp/duplicate-decisions.json
 重复项报告现在还会带每条路径的状态和 token 元信息，apply 结果会返回治理前后 delta。
 重复组现在还会按 review 风险排序，最该先处理的会优先浮到最上面。
 
+### 11. 可选：把本机私有仓库安全导出成公开 staging
+
+```bash
+hmctl public-export --list-profiles
+hmctl public-export --profile codex-project-memory --source /path/to/codex --output /tmp/codex-public-export
+hmctl public-export --profile memory-palace-project-tools --source /path/to/Memory-Palace --output /tmp/memory-palace-public-export
+```
+
+这条命令不是傻复制，它会：
+
+- 只复制 allowlist 里的安全文件
+- 把机器相关路径替换成 `${HOME}`、`${CODEX_REPO_ROOT}`、`${MEMORY_PALACE_ROOT}` 这类占位符
+- 如果还有绝对私有路径没脱掉，直接报错，不继续导出
+
 ## 冷记忆推荐接法
 
 ### 方案 A：已经有 Memory Palace

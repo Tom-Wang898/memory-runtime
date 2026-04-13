@@ -36,3 +36,12 @@ This is deliberate. It is cheaper to inject less context than to distort a preci
 - `hmctl skills-apply` requires explicit user intent and writes a rollback snapshot first
 - `hmctl skills-duplicates-apply` quarantines duplicates instead of deleting them
 - `hmctl skills-rollback` refuses conflicting files unless you pass `--force`
+
+## Public export safety
+
+`hmctl public-export` is allowlist-only.
+
+- it copies only built-in profile files
+- it rewrites machine-specific paths into placeholders before writing output
+- it writes a public manifest without local absolute paths
+- it aborts if a private absolute path survives sanitization
