@@ -91,35 +91,56 @@
             ctx.stroke();
           }
 
-          roundRect(72, 92, 610, 760, 30, 'rgba(14, 22, 47, 0.88)', 'rgba(107, 225, 198, 0.34)');
+          ctx.strokeStyle = 'rgba(107,225,198,0.18)';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(650, 790);
+          ctx.lineTo(760, 790);
+          ctx.lineTo(760, 848);
+          ctx.lineTo(900, 848);
+          ctx.stroke();
+
+          ctx.beginPath();
+          ctx.moveTo(120, 824);
+          ctx.lineTo(120, 900);
+          ctx.lineTo(286, 900);
+          ctx.stroke();
+
+          ctx.beginPath();
+          ctx.moveTo(980, 820);
+          ctx.lineTo(980, 900);
+          ctx.lineTo(1150, 900);
+          ctx.stroke();
+
+          roundRect(72, 76, 610, 824, 30, 'rgba(14, 22, 47, 0.88)', 'rgba(107, 225, 198, 0.34)');
 
           ctx.fillStyle = '#6be1c6';
           ctx.font = '24px Menlo, ui-monospace, monospace';
-          ctx.fillText('memory-runtime', 118, 166);
+          ctx.fillText('memory-runtime', 118, 150);
 
           ctx.fillStyle = '#f6f8ff';
           ctx.font = '800 72px Arial, Helvetica, sans-serif';
-          ctx.fillText('Hot/cold memory', 112, 278);
-          ctx.fillText('for CLI agents', 112, 368);
+          ctx.fillText('Hot/cold memory', 112, 262);
+          ctx.fillText('for CLI agents', 112, 352);
 
           ctx.fillStyle = '#c0cbff';
           ctx.font = '600 26px Arial, Helvetica, sans-serif';
-          ctx.fillText('Save tokens without rewriting the prompt.', 114, 520);
+          ctx.fillText('Save tokens without rewriting the prompt.', 114, 504);
 
-          pill(112, 650, 'Hot: SQLite', 150);
-          pill(276, 650, 'Cold: Memory Palace', 212);
-          pill(112, 714, 'Codex / Claude / Gemini', 270);
-          pill(396, 714, 'Fail-open', 126);
+          pill(112, 690, 'Hot: SQLite', 150);
+          pill(276, 690, 'Cold: Memory Palace', 212);
+          pill(112, 754, 'Codex / Claude / Gemini', 270);
+          pill(396, 754, 'Fail-open', 126);
 
-          note(792, 136, '$ codex "fix the auth flow"', [
+          note(792, 124, '$ codex "fix the auth flow"', [
             { text: 'bootstrap: compact context loaded' },
             { text: 'source: hot + cold', accent: true },
           ]);
-          note(792, 392, 'docker-ready cold memory', [
+          note(792, 362, 'docker-ready cold memory', [
             { text: 'backend-only install path' },
             { text: 'projects domain enabled', accent: true },
           ]);
-          note(792, 648, 'strict, fail-open memory', [
+          note(792, 600, 'strict, fail-open memory', [
             { text: 'never rewrites the user request' },
             { text: 'inject less when risk is high', accent: true },
           ]);
