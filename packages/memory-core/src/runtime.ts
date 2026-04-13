@@ -6,8 +6,10 @@ import type {
   FactHit,
   HotMemoryProvider,
   ProjectCapsule,
+  RecallQueryStrategy,
   RuntimeMetricRecord,
 } from "./contracts.js";
+import { buildScopedRecallQuery } from "./anchors.js";
 import { estimateCapsuleTokens } from "./estimate.js";
 import {
   inferBootstrapRiskLevel,
@@ -95,6 +97,7 @@ const trimCapsuleToBudget = (
 const createDiagnostics = (
   request: CapsuleRequest,
   degradeReasons: readonly string[],
+  recallQueryStrategy: RecallQueryStrategy,
   coldRecallAttempted: boolean,
   coldRecallUsed: boolean,
   latencyMs: number,
@@ -102,6 +105,7 @@ const createDiagnostics = (
 ): BootstrapDiagnostics => ({
   modeApplied: request.mode,
   riskLevel: inferBootstrapRiskLevel(request),
+  recallQueryStrategy,
   coldRecallAttempted,
   coldRecallUsed,
   usedFallback: capsule === null,
@@ -135,8 +139,9 @@ export class MemoryRuntime {
     const effectiveRequest = { ...request, budget };
     let capsule = await this.hotMemory.buildCapsule(effectiveRequest);
     let supportingFacts: readonly FactHit[] = [];
+    let recallQueryStrategy: RecallQueryStrategy = "none";
     const conservative = shouldUseConservativeBackground(effectiveRequest);
-    const shouldRecallCold =
+    const canAttemptColdRecall =
       Boolean(this.coldMemory) &&
       Boolean(effectiveRequest.allowColdRecall ?? true) &&
       effectiveRequest.mode !== "fast" &&
@@ -147,12 +152,22 @@ export class MemoryRuntime {
       degradeReasons.push("hot_capsule_missing");
     }
 
-    if (capsule && shouldRecallCold && this.coldMemory) {
+    if (capsule && canAttemptColdRecall && this.coldMemory) {
+      const recallQuery = buildScopedRecallQuery(
+        String(effectiveRequest.query ?? ""),
+        capsule,
+      );
+      recallQueryStrategy = recallQuery.strategy;
+      if (!recallQuery.query) {
+        if (recallQuery.strategy === "suppressed") {
+          degradeReasons.push("cold_recall_suppressed_ambiguous_query");
+        }
+      } else {
       try {
         const coldHits = await runWithTimeout(this.config.coldQueryTimeoutMs, async () =>
           this.coldMemory!.searchGists(
             effectiveRequest.project.id,
-            String(effectiveRequest.query ?? ""),
+            recallQuery.query,
           ),
         );
         supportingFacts = coldHits.slice(0, 4);
@@ -160,6 +175,7 @@ export class MemoryRuntime {
         degradeReasons.push(
           error instanceof Error ? error.message : "cold_recall_failed",
         );
+      }
       }
     }
 
@@ -172,7 +188,8 @@ export class MemoryRuntime {
     const diagnostics = createDiagnostics(
       effectiveRequest,
       degradeReasons,
-      shouldRecallCold,
+      recallQueryStrategy,
+      canAttemptColdRecall && recallQueryStrategy !== "suppressed",
       supportingFacts.length > 0,
       latencyMs,
       capsule,

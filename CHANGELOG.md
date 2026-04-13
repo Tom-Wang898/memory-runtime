@@ -11,11 +11,19 @@ The format is inspired by Keep a Changelog.
 - GitHub Actions CI workflow for push and pull request verification
 - repo hero SVG for README and GitHub social preview upload
 - social preview guidance and Discussions recommendation
+- scoped cold-recall anchoring for ambiguous short references
+- regression tests for anchored recall, suppression fallback, and summary sanitization
 
 ### Changed
 
 - README now uses a stronger homepage hero with badges
 - GitHub metadata now includes a clear Discussions policy for the alpha phase
+- wrappers no longer write synthetic automatic checkpoint summaries into hot memory
+- cold recall now suppresses ambiguous short queries when no hot-memory anchor exists
+
+### Fixed
+
+- removed a local absolute filesystem path from `assets/social-preview-compose.html`
 
 ## [0.1.0-alpha] - 2026-04-12
 

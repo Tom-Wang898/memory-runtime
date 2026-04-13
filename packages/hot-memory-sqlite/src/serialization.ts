@@ -7,7 +7,10 @@ import type {
   ProjectIdentity,
   WorkingSetEntry,
 } from "@memory-runtime/memory-core";
-import { resolveTokenBudget } from "@memory-runtime/memory-core";
+import {
+  resolveTokenBudget,
+  sanitizeCheckpointSummary,
+} from "@memory-runtime/memory-core";
 
 import {
   MAX_OPEN_LOOPS,
@@ -44,11 +47,13 @@ export const resolveCheckpointSummary = (
   record: CheckpointRecord,
   currentSummary: string | null,
 ): string => {
-  if (record.summary?.trim()) {
-    return record.summary.trim();
+  const explicitSummary = sanitizeCheckpointSummary(record.summary);
+  if (explicitSummary) {
+    return explicitSummary;
   }
-  if (currentSummary?.trim()) {
-    return currentSummary.trim();
+  const storedSummary = sanitizeCheckpointSummary(currentSummary);
+  if (storedSummary) {
+    return storedSummary;
   }
   if (record.activeTask?.trim()) {
     return `Current focus: ${record.activeTask.trim()}`;

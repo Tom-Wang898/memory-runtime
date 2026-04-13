@@ -84,6 +84,7 @@ That usually means one of these:
 - cold provider is disabled
 - Memory Palace has no matching durable facts yet
 - the query is in high-risk mode, so cold recall was suppressed
+- the query is too short or ambiguous and no hot-memory anchor was available
 
 Check the JSON payload:
 
@@ -95,7 +96,13 @@ Look at:
 
 - `diagnostics.coldRecallAttempted`
 - `diagnostics.coldRecallUsed`
+- `diagnostics.recallQueryStrategy`
 - `diagnostics.degradeReasons`
+
+If `recallQueryStrategy` is `suppressed`, the runtime intentionally refused
+to query cold memory because the current prompt looked like a short reference
+such as "route A", "option B", "this", or "that" without enough project-local
+anchor context.
 
 ## I want to bypass memory-runtime temporarily
 

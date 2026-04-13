@@ -63,3 +63,17 @@ Minimal bootstrap packet for a project session.
 | `summary` | `string` | Promoteable summary |
 | `facts` | `string[]` | Stable facts only |
 | `sourceSessionId` | `string \\| null` | Optional session link |
+
+## BootstrapDiagnostics
+
+| Field | Type | Notes |
+|---|---|---|
+| `modeApplied` | `"fast" \\| "warm" \\| "cold"` | Effective bootstrap mode |
+| `riskLevel` | `"normal" \\| "high"` | Risk classification for the query |
+| `recallQueryStrategy` | `"none" \\| "direct" \\| "anchored" \\| "suppressed"` | How cold-recall query construction was handled |
+| `coldRecallAttempted` | `boolean` | Whether the runtime actually queried cold memory |
+| `coldRecallUsed` | `boolean` | Whether cold memory returned facts that were injected |
+| `usedFallback` | `boolean` | Whether no hot capsule was available |
+| `degradeReasons` | `string[]` | Timeout, suppression, or fallback reasons |
+| `latencyMs` | `number` | End-to-end bootstrap latency |
+| `estimatedTokens` | `number` | Estimated bootstrap token size |

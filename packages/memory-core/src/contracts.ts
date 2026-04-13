@@ -12,6 +12,7 @@ export type CapsuleSource = "hot" | "hot+cold";
 export type OpenLoopSeverity = "low" | "medium" | "high";
 export type WorkingSetKind = "file" | "command" | "error" | "note";
 export type BootstrapRiskLevel = "normal" | "high";
+export type RecallQueryStrategy = "none" | "direct" | "anchored" | "suppressed";
 
 export interface ProjectIdentity {
   readonly id: string;
@@ -74,6 +75,7 @@ export interface CapsuleRequest {
 export interface BootstrapDiagnostics {
   readonly modeApplied: BootstrapMode;
   readonly riskLevel: BootstrapRiskLevel;
+  readonly recallQueryStrategy: RecallQueryStrategy;
   readonly coldRecallAttempted: boolean;
   readonly coldRecallUsed: boolean;
   readonly usedFallback: boolean;

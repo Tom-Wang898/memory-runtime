@@ -31,6 +31,7 @@ The core owns contracts and routing policy:
 - bootstrap mode selection
 - token budget resolution
 - hot-first / cold-second lookup order
+- ambiguous short-reference anchoring and suppression
 - conflict handling
 - fail-open rules
 
@@ -87,4 +88,5 @@ instead of blocking the CLI.
 - Hot memory adds context, it does not replace the request
 - Current task constraints are not lossy-compressed by default
 - If memory confidence is low, the runtime injects less, not more
+- If a short query is ambiguous, cold recall is anchored or suppressed
 - Failures in any provider must not block the host session

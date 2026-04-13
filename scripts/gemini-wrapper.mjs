@@ -69,8 +69,6 @@ const runCheckpoint = (cwd, activeTask) => {
       "checkpoint",
       "--cwd",
       cwd,
-      "--summary",
-      "Automatic checkpoint from Gemini wrapper",
       ...(activeTask ? ["--active-task", activeTask] : []),
     ],
     { stdio: "ignore" },

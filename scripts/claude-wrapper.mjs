@@ -83,8 +83,6 @@ const runCheckpoint = (cwd, activeTask) => {
       "checkpoint",
       "--cwd",
       cwd,
-      "--summary",
-      "Automatic checkpoint from Claude wrapper",
       ...(activeTask ? ["--active-task", activeTask] : []),
     ],
     { stdio: "ignore" },

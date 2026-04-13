@@ -63,6 +63,7 @@ test("runtime bootstrap merges hot capsule with fixture cold facts", async () =>
     assert.equal(payload.capsule?.summary, "Demo project summary");
     assert.equal(payload.capsule?.supportingFacts.length, 1);
     assert.equal(payload.diagnostics.coldRecallUsed, true);
+    assert.equal(payload.diagnostics.recallQueryStrategy, "direct");
   } finally {
     hotClient.close();
     rmSync(directory, { recursive: true, force: true });
@@ -100,6 +101,7 @@ test("high-risk bootstrap suppresses cold recall", async () => {
 
     assert.equal(payload.capsule?.supportingFacts.length, 0);
     assert.equal(payload.diagnostics.coldRecallAttempted, false);
+    assert.equal(payload.diagnostics.recallQueryStrategy, "none");
   } finally {
     hotClient.close();
     rmSync(directory, { recursive: true, force: true });

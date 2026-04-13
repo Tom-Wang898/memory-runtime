@@ -25,6 +25,7 @@ This repo is ready for public GitHub use as an `0.x` GitHub-first runtime:
 - Codex, Claude, and Gemini wrappers are implemented
 - shell integration can be installed with one command
 - cold-memory autostart is optional and fail-open
+- ambiguous short references are anchor-expanded or cold-recall-suppressed
 
 The current distribution model is:
 
@@ -60,6 +61,7 @@ CLI host
 - fail-open behavior that never blocks normal development
 - fast local bootstrap with strict latency and token budgets
 - replaceable hot and cold memory providers
+- ambiguous short references should recall less rather than recall wrong
 - public-repo-friendly code with no bundled personal memory data
 
 ## Prerequisites
@@ -177,6 +179,7 @@ The wrappers:
 - inject compact bootstrap context before a session starts
 - keep the raw user prompt intact
 - write a lightweight checkpoint after the wrapped command exits
+- avoid polluting hot memory with synthetic wrapper summaries
 
 ## Validation
 
