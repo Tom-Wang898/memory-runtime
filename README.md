@@ -14,7 +14,7 @@ under provider failures, and keep host integrations replaceable.
 
 - Chinese quick start: `README_CN.md`
 - Changelog: `CHANGELOG.md`
-- GitHub social preview note: use `assets/social-preview-github-4x3.png` in repository settings
+- GitHub social preview note: use `assets/social-preview-github-4x3-upload.jpg` in repository settings
 
 ## Current status
 

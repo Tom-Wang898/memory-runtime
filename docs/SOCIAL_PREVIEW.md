@@ -51,7 +51,7 @@ Proof points:
 
 ## Layout
 
-The current SVG uses:
+The current composition uses:
 
 - left panel for project identity and promise
 - right column for three proof blocks
@@ -59,7 +59,7 @@ The current SVG uses:
 
 Canvas sizes:
 
-- `1024 x 768` equivalent aspect via `assets/social-preview-github-4x3.png`
+- `1280 x 960` 4:3 version via `assets/social-preview-github-4x3.png`
 - `1280 x 640` wide version via `assets/social-preview-github.png`
 
 Why two versions exist:
