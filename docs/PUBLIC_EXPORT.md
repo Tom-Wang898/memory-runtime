@@ -87,20 +87,22 @@ That fail-fast behavior is the whole point.
 rg -n '/Users/|/home/|[A-Z]:\\\\Users\\\\' /path/to/staging
 ```
 
-4. Initialize a fresh public repo from the staging directory.
-5. Add project-specific README, license, and release metadata.
+4. Decide whether to transplant selected files into the current public repo or keep the staging directory as a local review artifact.
+5. Add project-specific README, license, and release metadata when needed.
 6. Push only after reviewing the final diff.
 
-## Recommended split
+## Recommended publishing shape
 
-Do not mash every private checkout into one giant mirror repo.
+Default recommendation:
 
-Recommended split:
+- keep using the current `memory-runtime` repository as the single public repo
+- use `hmctl public-export` only as a safe staging tool when you need to review or transplant selected assets
 
-- one mirror for Codex-side overlays and scripts
-- one mirror for Memory Palace-side project tooling
+Optional advanced setup:
 
-That keeps ownership, release scope, and review easier.
+- split exports into separate mirrors only if the Codex-side overlays and Memory Palace-side tools truly need independent ownership or release cadence
+
+For most users, one public repo is simpler and easier to maintain.
 
 ## Deliberate non-features
 
