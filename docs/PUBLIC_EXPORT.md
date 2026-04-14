@@ -69,6 +69,12 @@ Public-safe local config templates now also live in:
 
 - `templates/`
 
+If you want to apply the exported Memory Palace project bundle into another
+checkout later, use:
+
+- `docs/MEMORY_PALACE_PROJECT_TOOLS.md`
+- `./scripts/install-memory-palace-project-tools.sh`
+
 The manifest includes:
 
 - profile name

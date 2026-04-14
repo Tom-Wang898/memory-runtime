@@ -29,6 +29,7 @@ Quick links:
 - Configuration: `docs/CONFIGURATION.md`
 - Setup guide: `docs/SETUP.md`
 - Privacy and safe publishing: `docs/PRIVACY.md`
+- Memory Palace project tools: `docs/MEMORY_PALACE_PROJECT_TOOLS.md`
 - Public export workflow: `docs/PUBLIC_EXPORT.md`
 - Troubleshooting: `docs/TROUBLESHOOTING.md`
 - Changelog: `CHANGELOG.md`
@@ -295,6 +296,7 @@ npm run bench:skills-governance
 - `docs/CONFIGURATION.md`
 - `docs/SETUP.md`
 - `docs/PRIVACY.md`
+- `docs/MEMORY_PALACE_PROJECT_TOOLS.md`
 - `docs/PUBLIC_EXPORT.md`
 - `docs/SAFETY.md`
 - `docs/SOCIAL_PREVIEW.md`

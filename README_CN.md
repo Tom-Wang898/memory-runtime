@@ -29,6 +29,7 @@
 - 配置说明：`docs/CONFIGURATION.md`
 - 安装说明：`docs/SETUP.md`
 - 隐私与公开发布：`docs/PRIVACY.md`
+- Memory Palace 项目工具：`docs/MEMORY_PALACE_PROJECT_TOOLS.md`
 - 公开导出：`docs/PUBLIC_EXPORT.md`
 - 排障：`docs/TROUBLESHOOTING.md`
 - 变更记录：`CHANGELOG.md`
@@ -288,6 +289,7 @@ projects://<project-id>/...
 - 配置：`docs/CONFIGURATION.md`
 - 安装：`docs/SETUP.md`
 - 隐私：`docs/PRIVACY.md`
+- Memory Palace 项目工具：`docs/MEMORY_PALACE_PROJECT_TOOLS.md`
 - 公开导出：`docs/PUBLIC_EXPORT.md`
 - 排障：`docs/TROUBLESHOOTING.md`
 - 发布：`docs/RELEASE.md`
