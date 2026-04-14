@@ -3,7 +3,7 @@
 ![memory-runtime social preview](./assets/social-preview-github.png)
 
 [![CI](https://github.com/Tom-Wang898/memory-runtime/actions/workflows/ci.yml/badge.svg)](https://github.com/Tom-Wang898/memory-runtime/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/release/Tom-Wang898/memory-runtime?display_name=tag)](https://github.com/Tom-Wang898/memory-runtime/releases)
+[![Release](https://img.shields.io/github/v/release/Tom-Wang898/memory-runtime?include_prereleases&display_name=tag)](https://github.com/Tom-Wang898/memory-runtime/releases)
 [![License: MIT](https://img.shields.io/badge/license-MIT-6BE1C6.svg)](./LICENSE)
 [![Node 22+](https://img.shields.io/badge/node-22%2B-5FA04E.svg)](./package.json)
 
