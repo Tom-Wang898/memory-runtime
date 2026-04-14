@@ -117,26 +117,35 @@ const normalizeSummaryPoint = (line: string): string | null => {
 const extractSummaryPoints = (summary: string): readonly string[] =>
   uniqueNonEmpty(splitSummaryLines(summary).map(normalizeSummaryPoint)).slice(0, 4);
 
-const buildBackgroundSummary = (capsule: ProjectCapsule | null): string | null => {
-  if (!capsule) {
+const buildBackgroundSummary = (
+  capsule: ProjectCapsule | null,
+  backgroundFacts: readonly FactHit[],
+): string | null => {
+  if (!capsule && backgroundFacts.length === 0) {
     return null;
   }
-  const supportingSummary = capsule.supportingFacts[0]?.summary?.trim();
-  const decisionSummary = capsule.recentDecisions[0]?.summary?.trim();
-  const preferred = supportingSummary || decisionSummary || capsule.summary;
+  const supportingSummary = backgroundFacts[0]?.summary?.trim();
+  const decisionSummary = capsule?.recentDecisions[0]?.summary?.trim();
+  const preferred = supportingSummary || decisionSummary || capsule?.summary || null;
+  if (!preferred) {
+    return null;
+  }
   return trimSummary(preferred, 160);
 };
 
-const buildBackgroundPoints = (capsule: ProjectCapsule | null): readonly string[] => {
-  if (!capsule) {
-    return [];
-  }
+const buildBackgroundPoints = (
+  capsule: ProjectCapsule | null,
+  backgroundFacts: readonly FactHit[],
+): readonly string[] => {
   const explicitPoints = uniqueNonEmpty([
-    ...capsule.supportingFacts.map((item) => item.summary),
-    ...capsule.recentDecisions.map((item) => item.summary),
+    ...backgroundFacts.map((item) => item.summary),
+    ...(capsule?.recentDecisions ?? []).map((item) => item.summary),
   ]).slice(0, 4);
   if (explicitPoints.length > 0) {
     return explicitPoints;
+  }
+  if (!capsule) {
+    return [];
   }
   return extractSummaryPoints(capsule.summary);
 };
@@ -323,6 +332,7 @@ export class MemoryRuntime {
     }
 
     supportingFacts = mergeFactHits(primerFacts, supportingFacts);
+    const backgroundFacts = supportingFacts;
 
     if (!capsule && supportingFacts.length > 0) {
       capsule = createPrimerBackfilledCapsule(effectiveRequest, supportingFacts);
@@ -355,8 +365,8 @@ export class MemoryRuntime {
       project: effectiveRequest.project,
       mode: effectiveRequest.mode,
       capsule,
-      backgroundSummary: buildBackgroundSummary(capsule),
-      backgroundPoints: buildBackgroundPoints(capsule),
+      backgroundSummary: buildBackgroundSummary(capsule, backgroundFacts),
+      backgroundPoints: buildBackgroundPoints(capsule, backgroundFacts),
       currentFocus: buildCurrentFocus(capsule),
       recentProgress: buildRecentProgress(capsule),
       fallbackNotes: capsule

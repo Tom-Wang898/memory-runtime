@@ -196,6 +196,14 @@ test("high-risk bootstrap suppresses cold recall", async () => {
 
     assert.equal(payload.capsule?.supportingFacts.length, 0);
     assert.match(payload.capsule?.summary ?? "", /Codex wrapper bootstrap should remain additive/);
+    assert.equal(
+      payload.backgroundSummary,
+      "Codex wrapper bootstrap should remain additive.",
+    );
+    assert.deepEqual(
+      payload.backgroundPoints,
+      ["Codex wrapper bootstrap should remain additive."],
+    );
     assert.equal(payload.diagnostics.coldRecallAttempted, true);
     assert.equal(payload.diagnostics.coldRecallUsed, true);
     assert.equal(payload.diagnostics.recallQueryStrategy, "none");
