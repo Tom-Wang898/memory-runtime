@@ -25,6 +25,7 @@
 快速入口：
 
 - Docker 冷记忆：`docs/COLD_MEMORY_DOCKER.md`
+- Codex App 接入：`docs/CODEX_APP.md`
 - 配置说明：`docs/CONFIGURATION.md`
 - 公开导出：`docs/PUBLIC_EXPORT.md`
 - 排障：`docs/TROUBLESHOOTING.md`
@@ -281,6 +282,7 @@ projects://<project-id>/...
 - 英文版：`README.md`
 - 架构：`docs/ARCHITECTURE.md`
 - Docker 冷记忆：`docs/COLD_MEMORY_DOCKER.md`
+- Codex App 接入：`docs/CODEX_APP.md`
 - 配置：`docs/CONFIGURATION.md`
 - 公开导出：`docs/PUBLIC_EXPORT.md`
 - 排障：`docs/TROUBLESHOOTING.md`

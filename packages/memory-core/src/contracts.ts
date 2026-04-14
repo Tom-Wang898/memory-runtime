@@ -89,6 +89,10 @@ export interface BootstrapPayload {
   readonly project: ProjectIdentity;
   readonly mode: BootstrapMode;
   readonly capsule: ProjectCapsule | null;
+  readonly backgroundSummary?: string | null;
+  readonly backgroundPoints?: readonly string[];
+  readonly currentFocus?: readonly string[];
+  readonly recentProgress?: readonly string[];
   readonly fallbackNotes: readonly string[];
   readonly diagnostics: BootstrapDiagnostics;
 }

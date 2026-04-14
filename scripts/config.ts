@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, openSync, readFileSync } from "node:fs";
+import { existsSync, mkdirSync, openSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { homedir } from "node:os";
-import { basename, join, resolve as resolvePath } from "node:path";
+import { basename, dirname, join, resolve as resolvePath } from "node:path";
 import { execFileSync, spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
@@ -17,11 +17,18 @@ import {
   createSqliteHotMemoryClient,
   createSqliteHotMemoryProvider,
 } from "../packages/hot-memory-sqlite/src/index.ts";
+import type { ColdMemoryProvider } from "../packages/memory-core/src/index.ts";
 
 export interface RuntimeServices {
   readonly project: ProjectIdentity;
   readonly hotClient: ReturnType<typeof createSqliteHotMemoryClient>;
   readonly runtime: MemoryRuntime;
+  readonly coldProvider: ColdMemoryProvider | null;
+}
+
+export interface ProjectResolutionOptions {
+  readonly projectHint?: string | null;
+  readonly queryHint?: string | null;
 }
 
 const DEFAULT_MEMORY_PALACE_CANDIDATES = [
@@ -44,6 +51,50 @@ const PROJECT_OVERRIDE_FILES = [
   ".memory-palace-project.json",
   ".project-memory.json",
 ] as const;
+
+const CHILD_PROJECT_MARKERS = [
+  "package.json",
+  "pyproject.toml",
+  "Cargo.toml",
+  "go.mod",
+  "AGENTS.md",
+  "README.md",
+  "README_CN.md",
+] as const;
+
+const CHILD_SOURCE_DIRS = [
+  "src",
+  "app",
+  "pages",
+  "server",
+  "backend",
+  "frontend",
+  "src-tauri",
+] as const;
+
+const CHILD_PROJECT_SKIP_DIRS = new Set([
+  ".git",
+  ".next",
+  ".turbo",
+  "artifacts",
+  "build",
+  "coverage",
+  "dist",
+  "generated-images",
+  "node_modules",
+  "out",
+  "target",
+  "test-results",
+  "vendor",
+]);
+
+const DEFAULT_GLOBAL_PROJECT_ROOT = resolvePath(homedir(), "Documents");
+
+interface ProjectCandidate {
+  readonly rootPath: string;
+  readonly memoryNamespace: string;
+  readonly aliases: readonly string[];
+}
 
 const resolveGitRoot = (cwd: string): string | null => {
   try {
@@ -184,6 +235,29 @@ const buildProjectId = (rootPath: string): string => {
   return `${name}-${shortHash(rootPath)}`;
 };
 
+const listDirectoryNames = (rootPath: string): readonly string[] => {
+  try {
+    return readdirSync(rootPath, { withFileTypes: true })
+      .filter((entry) => entry.isDirectory())
+      .map((entry) => entry.name);
+  } catch {
+    return [];
+  }
+};
+
+const hasProjectSignals = (rootPath: string): boolean => {
+  if (existsSync(join(rootPath, ".git"))) {
+    return true;
+  }
+  if (PROJECT_OVERRIDE_FILES.some((fileName) => existsSync(join(rootPath, fileName)))) {
+    return true;
+  }
+  if (CHILD_PROJECT_MARKERS.some((fileName) => existsSync(join(rootPath, fileName)))) {
+    return true;
+  }
+  return CHILD_SOURCE_DIRS.some((dirName) => existsSync(join(rootPath, dirName)));
+};
+
 const loadProjectOverride = (rootPath: string): Record<string, unknown> => {
   for (const fileName of PROJECT_OVERRIDE_FILES) {
     const candidate = resolvePath(rootPath, fileName);
@@ -197,6 +271,19 @@ const loadProjectOverride = (rootPath: string): Record<string, unknown> => {
     }
   }
   return {};
+};
+
+const buildProjectAliases = (rootPath: string): readonly string[] => {
+  const override = loadProjectOverride(rootPath);
+  const aliases = [
+    basename(rootPath),
+    String(override.project_name ?? ""),
+    String(override.project_slug ?? ""),
+    resolveGitRemoteSlug(rootPath) ?? "",
+  ]
+    .map((value) => slugify(value))
+    .filter(Boolean);
+  return [...new Set(aliases)];
 };
 
 const resolveGitRemoteSlug = (rootPath: string): string | null => {
@@ -231,12 +318,163 @@ const resolveMemoryNamespace = (rootPath: string): string => {
   return resolveGitRemoteSlug(rootPath) ?? fallbackSlug;
 };
 
+const scoreCandidate = (
+  candidate: ProjectCandidate,
+  hint: string,
+): number => {
+  const normalizedHint = slugify(hint);
+  if (!normalizedHint) {
+    return 0;
+  }
+  let score = 0;
+  for (const alias of candidate.aliases) {
+    if (alias === normalizedHint) {
+      score = Math.max(score, 100);
+      continue;
+    }
+    if (normalizedHint.includes(alias)) {
+      score = Math.max(score, 80);
+      continue;
+    }
+    if (alias.includes(normalizedHint)) {
+      score = Math.max(score, 60);
+    }
+  }
+  return score;
+};
+
+const discoverWorkspaceProjects = (
+  rootPath: string,
+  maxDepth = 3,
+): readonly ProjectCandidate[] => {
+  const seen = new Set<string>();
+  const candidates: ProjectCandidate[] = [];
+  const walk = (currentPath: string, depth: number): void => {
+    if (depth > maxDepth) {
+      return;
+    }
+    const directoryNames = listDirectoryNames(currentPath);
+    for (const directoryName of directoryNames) {
+      if (CHILD_PROJECT_SKIP_DIRS.has(directoryName)) {
+        continue;
+      }
+      const nextPath = join(currentPath, directoryName);
+      let stats;
+      try {
+        stats = statSync(nextPath);
+      } catch {
+        continue;
+      }
+      if (!stats.isDirectory()) {
+        continue;
+      }
+      if (!seen.has(nextPath) && hasProjectSignals(nextPath)) {
+        seen.add(nextPath);
+        candidates.push({
+          rootPath: nextPath,
+          memoryNamespace: resolveMemoryNamespace(nextPath),
+          aliases: buildProjectAliases(nextPath),
+        });
+        continue;
+      }
+      walk(nextPath, depth + 1);
+    }
+  };
+  walk(rootPath, 1);
+  return candidates;
+};
+
+const discoverGlobalProjects = (
+  rootPath: string,
+  maxDepth = 3,
+): readonly ProjectCandidate[] => {
+  const discovered: ProjectCandidate[] = [];
+  const seen = new Set<string>();
+  const walk = (currentPath: string, depth: number): void => {
+    if (depth > maxDepth) {
+      return;
+    }
+    const directoryNames = listDirectoryNames(currentPath);
+    for (const directoryName of directoryNames) {
+      if (CHILD_PROJECT_SKIP_DIRS.has(directoryName) || directoryName.startsWith(".Trash")) {
+        continue;
+      }
+      const nextPath = join(currentPath, directoryName);
+      if (seen.has(nextPath)) {
+        continue;
+      }
+      if (hasProjectSignals(nextPath)) {
+        seen.add(nextPath);
+        discovered.push({
+          rootPath: nextPath,
+          memoryNamespace: resolveMemoryNamespace(nextPath),
+          aliases: buildProjectAliases(nextPath),
+        });
+        continue;
+      }
+      walk(nextPath, depth + 1);
+    }
+  };
+  walk(rootPath, 1);
+  return discovered;
+};
+
+const rankProjectCandidates = (
+  candidates: readonly ProjectCandidate[],
+  hints: readonly string[],
+): string | null => {
+  if (hints.length === 0) {
+    return candidates.length === 1 ? candidates[0]!.rootPath : null;
+  }
+  const ranked = candidates
+    .map((candidate) => ({
+      candidate,
+      score: Math.max(...hints.map((hint) => scoreCandidate(candidate, hint))),
+    }))
+    .filter((item) => item.score >= 60)
+    .sort((left, right) => right.score - left.score);
+  return ranked[0]?.candidate.rootPath ?? null;
+};
+
+const resolveWorkspaceProjectRoot = (
+  rootPath: string,
+  options: ProjectResolutionOptions,
+): string | null => {
+  const hints = [options.projectHint, options.queryHint]
+    .map((value) => String(value ?? "").trim())
+    .filter(Boolean);
+  const workspaceMatch = rankProjectCandidates(
+    discoverWorkspaceProjects(rootPath),
+    hints,
+  );
+  if (workspaceMatch) {
+    return workspaceMatch;
+  }
+  if (hints.length === 0) {
+    return null;
+  }
+  if (!existsSync(DEFAULT_GLOBAL_PROJECT_ROOT)) {
+    return null;
+  }
+  return rankProjectCandidates(
+    discoverGlobalProjects(DEFAULT_GLOBAL_PROJECT_ROOT),
+    hints,
+  );
+};
+
 export const detectProjectIdentity = (
   cwd: string,
   host: string | null,
+  options: ProjectResolutionOptions = {},
 ): ProjectIdentity => {
   const vcsRoot = resolveGitRoot(cwd);
-  const rootPath = vcsRoot ?? resolvePath(cwd);
+  const resolvedCwd = resolvePath(cwd);
+  const baseRoot = vcsRoot ?? resolvedCwd;
+  const workspaceMatch =
+    !vcsRoot || baseRoot === resolvedCwd
+      ? resolveWorkspaceProjectRoot(baseRoot, options)
+      : null;
+  const rootPath = workspaceMatch ?? baseRoot;
   return {
     id: buildProjectId(rootPath),
     memoryNamespace: resolveMemoryNamespace(rootPath),
@@ -278,18 +516,20 @@ export const normalizeMode = (value: string | undefined): BootstrapMode => {
 export const createRuntimeServices = (
   cwd: string,
   host: string | null,
+  options: ProjectResolutionOptions = {},
 ): RuntimeServices => {
-  const project = detectProjectIdentity(cwd, host);
+  const project = detectProjectIdentity(cwd, host, options);
+  const coldProvider = buildColdProvider(project);
   const hotClient = createSqliteHotMemoryClient({
     databasePath: resolveHotDatabasePath(),
   });
   const runtime = new MemoryRuntime(
     createSqliteHotMemoryProvider(hotClient),
-    buildColdProvider(project),
+    coldProvider,
     {
       coldQueryTimeoutMs: Number(process.env.MEMORY_RUNTIME_COLD_TIMEOUT_MS ?? 350),
     },
     hotClient.createObserver(),
   );
-  return { project, hotClient, runtime };
+  return { project, hotClient, runtime, coldProvider };
 };

@@ -108,3 +108,28 @@ test("detectProjectIdentity derives memory namespace from override file", async 
     rmSync(sandboxRoot, { recursive: true, force: true });
   }
 });
+
+test("detectProjectIdentity resolves a hinted child project inside a workspace root", async () => {
+  const sandboxRoot = mkdtempSync(join(tmpdir(), "memory-runtime-workspace-"));
+  const childRoot = join(sandboxRoot, "KeepFlow");
+  try {
+    writeFileSync(join(sandboxRoot, "AGENTS.md"), "# workspace\n");
+    mkdirSync(join(childRoot, "src"), { recursive: true });
+    writeFileSync(
+      join(childRoot, ".memory-palace-project.json"),
+      JSON.stringify({
+        project_slug: "keepflow",
+        project_name: "KeepFlow",
+      }),
+    );
+    writeFileSync(join(childRoot, "package.json"), JSON.stringify({ name: "keepflow" }));
+
+    const identity = detectProjectIdentity(sandboxRoot, "codex", {
+      projectHint: "KeepFlow",
+    });
+    assert.equal(identity.rootPath, childRoot);
+    assert.equal(identity.memoryNamespace, "keepflow");
+  } finally {
+    rmSync(sandboxRoot, { recursive: true, force: true });
+  }
+});

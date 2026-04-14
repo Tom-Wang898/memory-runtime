@@ -25,6 +25,7 @@ Quick links:
 
 - Chinese quick start: `README_CN.md`
 - Docker cold memory: `docs/COLD_MEMORY_DOCKER.md`
+- Codex app integration: `docs/CODEX_APP.md`
 - Configuration: `docs/CONFIGURATION.md`
 - Public export workflow: `docs/PUBLIC_EXPORT.md`
 - Troubleshooting: `docs/TROUBLESHOOTING.md`
@@ -285,6 +286,7 @@ npm run bench:skills-governance
 
 - `docs/ARCHITECTURE.md`
 - `docs/COLD_MEMORY_DOCKER.md`
+- `docs/CODEX_APP.md`
 - `docs/DATA_CONTRACTS.md`
 - `docs/CONFIGURATION.md`
 - `docs/PUBLIC_EXPORT.md`

@@ -90,6 +90,77 @@ const mergeFactHits = (
 const trimSummary = (summary: string, limit: number): string =>
   summary.length <= limit ? summary : `${summary.slice(0, Math.max(0, limit - 1)).trim()}…`;
 
+const uniqueNonEmpty = (items: readonly (string | null | undefined)[]): readonly string[] =>
+  [...new Set(items.map((item) => String(item ?? "").trim()).filter(Boolean))];
+
+const splitSummaryLines = (summary: string): readonly string[] =>
+  summary
+    .split(/\r?\n|;/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+const normalizeSummaryPoint = (line: string): string | null => {
+  const normalized = line
+    .replace(/^[-*]\s*/, "")
+    .replace(/^\d+\.\s*/, "")
+    .replace(/^项目热启动摘要[:：]\s*/, "")
+    .replace(/^作用[:：]\s*/, "")
+    .replace(/^项目概览[:：]\s*/, "")
+    .replace(/^当前主题[:：]\s*/, "")
+    .trim();
+  if (!normalized || normalized.length < 4) {
+    return null;
+  }
+  return normalized;
+};
+
+const extractSummaryPoints = (summary: string): readonly string[] =>
+  uniqueNonEmpty(splitSummaryLines(summary).map(normalizeSummaryPoint)).slice(0, 4);
+
+const buildBackgroundSummary = (capsule: ProjectCapsule | null): string | null => {
+  if (!capsule) {
+    return null;
+  }
+  const supportingSummary = capsule.supportingFacts[0]?.summary?.trim();
+  const decisionSummary = capsule.recentDecisions[0]?.summary?.trim();
+  const preferred = supportingSummary || decisionSummary || capsule.summary;
+  return trimSummary(preferred, 160);
+};
+
+const buildBackgroundPoints = (capsule: ProjectCapsule | null): readonly string[] => {
+  if (!capsule) {
+    return [];
+  }
+  const explicitPoints = uniqueNonEmpty([
+    ...capsule.supportingFacts.map((item) => item.summary),
+    ...capsule.recentDecisions.map((item) => item.summary),
+  ]).slice(0, 4);
+  if (explicitPoints.length > 0) {
+    return explicitPoints;
+  }
+  return extractSummaryPoints(capsule.summary);
+};
+
+const buildCurrentFocus = (capsule: ProjectCapsule | null): readonly string[] => {
+  if (!capsule) {
+    return [];
+  }
+  return uniqueNonEmpty([
+    ...capsule.openLoops.map((item) => item.summary),
+    capsule.activeTask,
+  ]).slice(0, 4);
+};
+
+const buildRecentProgress = (capsule: ProjectCapsule | null): readonly string[] => {
+  if (!capsule) {
+    return [];
+  }
+  return uniqueNonEmpty([
+    capsule.summary,
+    ...capsule.workingSet.map((item) => item.label ? `${item.label}: ${item.value}` : item.value),
+  ]).slice(0, 3);
+};
+
 const createPrimerBackfilledCapsule = (
   request: CapsuleRequest,
   supportingFacts: readonly FactHit[],
@@ -284,6 +355,10 @@ export class MemoryRuntime {
       project: effectiveRequest.project,
       mode: effectiveRequest.mode,
       capsule,
+      backgroundSummary: buildBackgroundSummary(capsule),
+      backgroundPoints: buildBackgroundPoints(capsule),
+      currentFocus: buildCurrentFocus(capsule),
+      recentProgress: buildRecentProgress(capsule),
       fallbackNotes: capsule
         ? []
         : [

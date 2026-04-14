@@ -1,47 +1,141 @@
-import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtempSync, rmSync } from "node:fs";
-import { join } from "node:path";
+import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
+import { join } from "node:path";
+import test from "node:test";
 
-import { createSqliteHotMemoryClient } from "../packages/hot-memory-sqlite/src/index.ts";
-import { handleBridgeRequest } from "../packages/mcp-bridge/src/index.ts";
-import { detectProjectIdentity } from "../scripts/config.ts";
+import {
+  handleBridgeRequest,
+  listMcpTools,
+} from "../packages/mcp-bridge/src/index.ts";
 
-test("bridge returns bootstrap payload", async () => {
-  const directory = mkdtempSync(join(tmpdir(), "memory-runtime-bridge-"));
-  const originalEnv = process.env.MEMORY_RUNTIME_HOT_DB_PATH;
-  process.env.MEMORY_RUNTIME_HOT_DB_PATH = join(directory, "hot-memory.db");
-  const client = createSqliteHotMemoryClient({
-    databasePath: process.env.MEMORY_RUNTIME_HOT_DB_PATH,
-  });
-  const project = detectProjectIdentity(directory, "bridge");
-
-  try {
-    await client.writeCheckpoint({
-      project,
-      sessionId: "bridge-session",
-      summary: "Bridge project summary",
-      activeTask: "Inspect bridge output",
-      openLoops: [],
-      recentDecisions: [],
-      workingSet: [],
-    });
-
-    const result = (await handleBridgeRequest({
-      tool: "bootstrap_project",
-      cwd: directory,
-      args: { mode: "fast" },
-    })) as { capsule?: { summary?: string } };
-
-    assert.equal(result.capsule?.summary, "Bridge project summary");
-  } finally {
-    client.close();
-    if (originalEnv) {
-      process.env.MEMORY_RUNTIME_HOT_DB_PATH = originalEnv;
+const withEnv = async (
+  values: Record<string, string | undefined>,
+  callback: () => Promise<void> | void,
+): Promise<void> => {
+  const previous = Object.fromEntries(
+    Object.keys(values).map((key) => [key, process.env[key]]),
+  );
+  for (const [key, value] of Object.entries(values)) {
+    if (value === undefined) {
+      delete process.env[key];
     } else {
-      delete process.env.MEMORY_RUNTIME_HOT_DB_PATH;
+      process.env[key] = value;
     }
-    rmSync(directory, { recursive: true, force: true });
+  }
+  try {
+    await callback();
+  } finally {
+    for (const [key, value] of Object.entries(previous)) {
+      if (value === undefined) {
+        delete process.env[key];
+      } else {
+        process.env[key] = value;
+      }
+    }
+  }
+};
+
+test("listMcpTools exposes app-compatible memory tools", async () => {
+  assert.deepEqual(
+    listMcpTools().map((tool) => tool.name),
+    [
+      "memory_bootstrap",
+      "memory_checkpoint",
+      "memory_search",
+      "memory_project_state",
+    ],
+  );
+});
+
+test("bridge handlers support checkpoint, bootstrap, search, and project state", async () => {
+  const sandboxRoot = mkdtempSync(join(tmpdir(), "memory-runtime-mcp-bridge-"));
+  const childRoot = join(sandboxRoot, "KeepFlow");
+  const hotDbPath = join(sandboxRoot, "hot-memory.db");
+  try {
+    writeFileSync(join(sandboxRoot, "AGENTS.md"), "# workspace\n");
+    mkdirSync(join(childRoot, "src"), { recursive: true });
+    writeFileSync(
+      join(childRoot, ".memory-palace-project.json"),
+      JSON.stringify({
+        project_slug: "bridge-demo",
+        project_name: "KeepFlow",
+      }),
+    );
+    writeFileSync(join(childRoot, "package.json"), JSON.stringify({ name: "keepflow" }));
+    await withEnv(
+      {
+        MEMORY_RUNTIME_HOT_DB_PATH: hotDbPath,
+        MEMORY_RUNTIME_COLD_PROVIDER: "none",
+      },
+      async () => {
+        const checkpointResult = await handleBridgeRequest({
+          tool: "memory_checkpoint",
+          cwd: sandboxRoot,
+          args: {
+            projectHint: "KeepFlow",
+            summary: "Bridge checkpoint summary",
+            activeTask: "Verify MCP bridge",
+            decisions: ["Use MCP for app memory::consistency"],
+            openLoops: ["Validate app path::medium"],
+          },
+        });
+        assert.equal(
+          (checkpointResult as { ok: boolean }).ok,
+          true,
+        );
+        assert.match(
+          String((checkpointResult as { projectId: string }).projectId),
+          /^keepflow-/,
+        );
+
+        const bootstrap = await handleBridgeRequest({
+          tool: "memory_bootstrap",
+          cwd: sandboxRoot,
+          args: {
+            projectHint: "KeepFlow",
+            mode: "warm",
+            query: "Verify MCP bridge",
+          },
+        });
+        assert.match(
+          JSON.stringify(bootstrap),
+          /Bridge checkpoint summary/,
+        );
+        assert.equal(
+          (bootstrap as { backgroundSummary: string }).backgroundSummary,
+          "Use MCP for app memory",
+        );
+        assert.deepEqual(
+          (bootstrap as { backgroundPoints: readonly string[] }).backgroundPoints,
+          ["Use MCP for app memory"],
+        );
+        assert.deepEqual(
+          (bootstrap as { currentFocus: readonly string[] }).currentFocus,
+          ["Validate app path", "Verify MCP bridge"],
+        );
+        assert.deepEqual(
+          (bootstrap as { recentProgress: readonly string[] }).recentProgress,
+          ["Bridge checkpoint summary"],
+        );
+
+        const state = await handleBridgeRequest({
+          tool: "memory_project_state",
+          cwd: sandboxRoot,
+          args: { projectHint: "KeepFlow" },
+        });
+        assert.match(JSON.stringify(state), /bridge-demo/);
+        assert.match(JSON.stringify(state), /\"hasCapsule\":true/);
+
+        const search = await handleBridgeRequest({
+          tool: "memory_search",
+          cwd: sandboxRoot,
+          args: { projectHint: "KeepFlow", query: "anything", limit: 3 },
+        });
+        assert.deepEqual(search, { query: "anything", hits: [] });
+      },
+    );
+  } finally {
+    rmSync(sandboxRoot, { recursive: true, force: true });
   }
 });
