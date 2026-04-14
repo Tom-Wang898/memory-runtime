@@ -27,6 +27,8 @@ Quick links:
 - Docker cold memory: `docs/COLD_MEMORY_DOCKER.md`
 - Codex app integration: `docs/CODEX_APP.md`
 - Configuration: `docs/CONFIGURATION.md`
+- Setup guide: `docs/SETUP.md`
+- Privacy and safe publishing: `docs/PRIVACY.md`
 - Public export workflow: `docs/PUBLIC_EXPORT.md`
 - Troubleshooting: `docs/TROUBLESHOOTING.md`
 - Changelog: `CHANGELOG.md`
@@ -239,6 +241,8 @@ See:
 
 - `docs/COLD_MEMORY_DOCKER.md`
 - `docs/CONFIGURATION.md`
+- `docs/SETUP.md`
+- `docs/PRIVACY.md`
 
 ## What gets installed
 
@@ -289,6 +293,8 @@ npm run bench:skills-governance
 - `docs/CODEX_APP.md`
 - `docs/DATA_CONTRACTS.md`
 - `docs/CONFIGURATION.md`
+- `docs/SETUP.md`
+- `docs/PRIVACY.md`
 - `docs/PUBLIC_EXPORT.md`
 - `docs/SAFETY.md`
 - `docs/SOCIAL_PREVIEW.md`

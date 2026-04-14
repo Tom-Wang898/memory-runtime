@@ -22,6 +22,12 @@ Inspect the live list with:
 hmctl public-export --list-profiles
 ```
 
+If you want a shorter wrapper, use:
+
+```bash
+./scripts/export-public.sh --profile codex-project-memory --source /path/to/codex --output /tmp/codex-public-export
+```
+
 ## Basic usage
 
 ```bash
@@ -59,6 +65,10 @@ Template assets for common README and `.gitignore` scaffolding live in:
 
 - `examples/public-export/templates/`
 
+Public-safe local config templates now also live in:
+
+- `templates/`
+
 The manifest includes:
 
 - profile name
@@ -93,7 +103,8 @@ rg -n '/Users/|/home/|[A-Z]:\\\\Users\\\\' /path/to/staging
 
 4. Decide whether to transplant selected files into the current public repo or keep the staging directory as a local review artifact.
 5. Add project-specific README, license, and release metadata when needed.
-6. Push only after reviewing the final diff.
+6. Review `docs/PRIVACY.md` and make sure the staged output still respects it.
+7. Push only after reviewing the final diff.
 
 ## Recommended publishing shape
 

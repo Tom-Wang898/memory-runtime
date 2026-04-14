@@ -8,6 +8,7 @@
 - example configs
 - architecture and safety docs
 - sanitized exports produced by `hmctl public-export`
+- example templates from `templates/`
 
 ## Never publish
 
@@ -24,6 +25,7 @@
 
 Use `hmctl public-export --list-profiles` to inspect the built-in profiles.
 For the full staging flow, see `docs/PUBLIC_EXPORT.md`.
+For privacy rules, see `docs/PRIVACY.md`.
 
 Current profiles:
 
@@ -35,6 +37,7 @@ Example:
 ```bash
 hmctl public-export --profile codex-project-memory --source /path/to/codex --output /tmp/codex-public-export
 hmctl public-export --profile memory-palace-project-tools --source /path/to/Memory-Palace --output /tmp/memory-palace-public-export
+./scripts/export-public.sh --profile codex-project-memory --source /path/to/codex --output /tmp/codex-public-export
 ```
 
 What the command does:
@@ -54,10 +57,11 @@ What it deliberately does not do:
 
 1. verify `.env.example` is generic
 2. verify `hmctl public-export --dry-run` succeeds for every private source you plan to mirror
-3. remove local debug paths from docs and code defaults
-4. verify `LICENSE` is present
-5. run `npm run check:all`
-6. run benchmark scripts and attach results
-7. verify `./scripts/install-shell-integration.sh` works on a clean shell profile
-8. verify `./scripts/install-memory-palace-docker.sh --no-start` generates valid cold-memory assets
-9. confirm no personal memory files are tracked
+3. verify templates under `templates/` do not contain private paths or secrets
+4. remove local debug paths from docs and code defaults
+5. verify `LICENSE` is present
+6. run `npm run check:all`
+7. run benchmark scripts and attach results
+8. verify `./scripts/install-shell-integration.sh` works on a clean shell profile
+9. verify `./scripts/install-memory-palace-docker.sh --no-start` generates valid cold-memory assets
+10. confirm no personal memory files are tracked

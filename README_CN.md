@@ -27,6 +27,8 @@
 - Docker 冷记忆：`docs/COLD_MEMORY_DOCKER.md`
 - Codex App 接入：`docs/CODEX_APP.md`
 - 配置说明：`docs/CONFIGURATION.md`
+- 安装说明：`docs/SETUP.md`
+- 隐私与公开发布：`docs/PRIVACY.md`
 - 公开导出：`docs/PUBLIC_EXPORT.md`
 - 排障：`docs/TROUBLESHOOTING.md`
 - 变更记录：`CHANGELOG.md`
@@ -284,6 +286,8 @@ projects://<project-id>/...
 - Docker 冷记忆：`docs/COLD_MEMORY_DOCKER.md`
 - Codex App 接入：`docs/CODEX_APP.md`
 - 配置：`docs/CONFIGURATION.md`
+- 安装：`docs/SETUP.md`
+- 隐私：`docs/PRIVACY.md`
 - 公开导出：`docs/PUBLIC_EXPORT.md`
 - 排障：`docs/TROUBLESHOOTING.md`
 - 发布：`docs/RELEASE.md`

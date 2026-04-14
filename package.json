@@ -21,6 +21,7 @@
     "check:hot-memory": "node --disable-warning=ExperimentalWarning --experimental-strip-types --import ./scripts/register-ts-loader.mjs ./scripts/smoke-hot-memory.ts",
     "check:test": "node --disable-warning=ExperimentalWarning --experimental-strip-types --import ./scripts/register-ts-loader.mjs --test ./tests/**/*.test.ts",
     "check:all": "npm run check:scaffold && npm run check:imports && npm run check:install && npm run check:cold-docker && npm run check:hot-memory && npm run check:test",
+    "export:public": "./scripts/export-public.sh",
     "bench:bootstrap": "node --disable-warning=ExperimentalWarning --experimental-strip-types --import ./scripts/register-ts-loader.mjs ./benchmarks/run-bootstrap-benchmark.ts",
     "bench:tokens": "node --disable-warning=ExperimentalWarning --experimental-strip-types --import ./scripts/register-ts-loader.mjs ./benchmarks/run-token-savings-benchmark.ts",
     "bench:skills-governance": "node --disable-warning=ExperimentalWarning --experimental-strip-types --import ./scripts/register-ts-loader.mjs ./benchmarks/run-skills-governance-benchmark.ts"
