@@ -19,9 +19,10 @@ const runHmctl = (args: readonly string[]): string =>
   execFileSync(
     process.execPath,
     [
+      "--disable-warning=ExperimentalWarning",
       "--experimental-strip-types",
-      "--loader",
-      "./scripts/ts-local-loader.mjs",
+      "--import",
+      "./scripts/register-ts-loader.mjs",
       "./scripts/hmctl.ts",
       ...args,
     ],

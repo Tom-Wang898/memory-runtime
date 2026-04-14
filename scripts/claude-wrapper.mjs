@@ -3,7 +3,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const PROJECT_ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
-const HMCTL_PATH = join(PROJECT_ROOT, "bin", "hmctl");
+const HMCTL_PATH = process.env.MEMORY_RUNTIME_HMCTL_PATH ?? join(PROJECT_ROOT, "bin", "hmctl");
 const KNOWN_SUBCOMMANDS = new Set([
   "agents",
   "auth",

@@ -17,6 +17,30 @@ source ~/.zshrc
 
 Use `--shell bash` if you are on bash.
 
+## Startup shows Node experimental warnings
+
+Current wrapper entrypoints suppress the noisy `ExperimentalWarning` lines from:
+
+- `--loader` deprecation guidance
+- `node:sqlite` experimental notices
+
+If you still see them, check whether your shell is pointing at the current repo
+wrapper instead of an older install.
+
+Check:
+
+```bash
+type hmctl
+type codex
+type gemini
+```
+
+Expected shape:
+
+- `hmctl` resolves to `memory-runtime/bin/hmctl`
+- `codex` resolves to the shell function installed by `install-shell-integration.sh`
+- `gemini` resolves to the shell function installed by `install-shell-integration.sh`
+
 ## Current shell still uses the old commands
 
 The installer edits your shell rc file.
@@ -30,6 +54,32 @@ source ~/.zshrc
 ```
 
 or just open a new terminal tab.
+
+## Codex or Gemini starts doing work before I type anything
+
+That was old wrapper behavior.
+
+Current wrappers only inject bootstrap automatically when there is an explicit
+initial prompt.
+
+Plain interactive launches such as:
+
+```bash
+codex
+gemini
+```
+
+should no longer synthesize a first user message.
+
+If they still do, your shell is probably using stale wrapper files.
+
+Fix:
+
+```bash
+source ~/.zshrc
+type codex
+type gemini
+```
 
 ## Cold memory does not auto-start
 

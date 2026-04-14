@@ -3,7 +3,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const PROJECT_ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
-const HMCTL_PATH = join(PROJECT_ROOT, "bin", "hmctl");
+const HMCTL_PATH = process.env.MEMORY_RUNTIME_HMCTL_PATH ?? join(PROJECT_ROOT, "bin", "hmctl");
 const KNOWN_SUBCOMMANDS = new Set(["mcp", "extensions", "extension", "skills", "skill", "hooks", "hook"]);
 const PASSTHROUGH_FLAGS = new Set(["-h", "--help", "-v", "--version", "-l", "--list-extensions", "--list-sessions"]);
 const OPTIONS_WITH_VALUES = new Set([
@@ -100,8 +100,8 @@ const main = () => {
     explicitPromptArgs !== null
       ? args[args.findIndex((value) => promptKeys.has(value)) + 1]
       : firstPositional.value;
-  const bootstrap = readBootstrap(cwd, originalPrompt);
-  const mergedPrompt = buildPrompt(bootstrap, originalPrompt);
+  const bootstrap = originalPrompt ? readBootstrap(cwd, originalPrompt) : null;
+  const mergedPrompt = bootstrap && originalPrompt ? buildPrompt(bootstrap, originalPrompt) : null;
 
   let finalArgs;
   if (explicitPromptArgs !== null) {
@@ -114,7 +114,7 @@ const main = () => {
       ...args.slice(firstPositional.index + 1),
     ];
   } else {
-    finalArgs = ["--prompt-interactive", bootstrap, ...args];
+    finalArgs = args;
   }
 
   const result = spawnSync("gemini", finalArgs, { stdio: "inherit" });

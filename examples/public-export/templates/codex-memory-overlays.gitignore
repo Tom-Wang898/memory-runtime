@@ -1,0 +1,12 @@
+.DS_Store
+*.log
+*.db
+*.sqlite
+*.sqlite*
+.env
+.env.*
+sessions/
+archived_sessions/
+shell_snapshots/
+history.jsonl
+auth.json

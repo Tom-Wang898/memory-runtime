@@ -3,7 +3,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const PROJECT_ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
-const HMCTL_PATH = join(PROJECT_ROOT, "bin", "hmctl");
+const HMCTL_PATH = process.env.MEMORY_RUNTIME_HMCTL_PATH ?? join(PROJECT_ROOT, "bin", "hmctl");
 const KNOWN_SUBCOMMANDS = new Set([
   "exec",
   "review",
@@ -128,13 +128,16 @@ const main = () => {
 
   if (!subcommand) {
     const originalPrompt = firstPositional.value;
-    const bootstrap = readBootstrap(cwd, originalPrompt);
-    activeTask = originalPrompt ?? null;
-    const prompt = buildBootstrapPrompt(bootstrap, originalPrompt);
-    finalArgs =
-      firstPositional.index >= 0
-        ? [...args.slice(0, firstPositional.index), prompt, ...args.slice(firstPositional.index + 1)]
-        : [...args, prompt];
+    if (originalPrompt) {
+      const bootstrap = readBootstrap(cwd, originalPrompt);
+      activeTask = originalPrompt;
+      const prompt = buildBootstrapPrompt(bootstrap, originalPrompt);
+      finalArgs = [
+        ...args.slice(0, firstPositional.index),
+        prompt,
+        ...args.slice(firstPositional.index + 1),
+      ];
+    }
   } else if (subcommand === "exec") {
     const execArgs = args.slice(firstPositional.index + 1);
     const execPositional = findFirstPositional(execArgs);

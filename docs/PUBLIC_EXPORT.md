@@ -55,6 +55,10 @@ The output directory contains:
 - exported allowlisted files
 - `PUBLIC_EXPORT_MANIFEST.json`
 
+Template assets for common README and `.gitignore` scaffolding live in:
+
+- `examples/public-export/templates/`
+
 The manifest includes:
 
 - profile name

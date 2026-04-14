@@ -1,0 +1,15 @@
+.DS_Store
+*.log
+*.db
+*.sqlite
+*.sqlite*
+.env
+.env.*
+__pycache__/
+.pytest_cache/
+.venv/
+sessions/
+archived_sessions/
+shell_snapshots/
+history.jsonl
+auth.json

@@ -5,7 +5,8 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd -- "${SCRIPT_DIR}/.." && pwd)"
 
 exec node \
+  --disable-warning=ExperimentalWarning \
   --experimental-strip-types \
-  --loader "${PROJECT_ROOT}/scripts/ts-local-loader.mjs" \
+  --import "${PROJECT_ROOT}/scripts/register-ts-loader.mjs" \
   "${PROJECT_ROOT}/scripts/hmctl.ts" \
   "$@"

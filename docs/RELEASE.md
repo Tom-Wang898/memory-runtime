@@ -18,7 +18,14 @@ npm run bench:bootstrap
 npm run bench:tokens
 ./scripts/install-shell-integration.sh --shell zsh --rc-file /tmp/memory-runtime.zshrc
 ./scripts/install-memory-palace-docker.sh --install-root /tmp/memory-palace-backend --runtime-env-file /tmp/memory-runtime.env --no-start
+./bin/hmctl bootstrap --cwd "$(pwd)" --mode warm --json
 ```
+
+Manual wrapper sanity checks:
+
+- bare `codex` launch should not synthesize a fake first user prompt
+- bare `gemini` launch should not synthesize a fake first user prompt
+- wrapper startup should not print noisy `ExperimentalWarning` lines
 
 ## Release notes must include
 
