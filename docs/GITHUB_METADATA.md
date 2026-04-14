@@ -33,7 +33,7 @@ Automatic hot/cold memory runtime for Codex, Claude, and Gemini that saves token
 
 ## Suggested release title
 
-`v0.1.1-alpha: quieter wrappers and safer public export`
+`v0.1.2-alpha: quieter wrappers and safer public export`
 
 ## Suggested social preview caption
 
