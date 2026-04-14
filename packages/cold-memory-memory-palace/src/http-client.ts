@@ -71,6 +71,79 @@ const trimText = (value: string, limit: number): string => {
   return `${normalized.slice(0, Math.max(0, limit - 1)).trim()}…`;
 };
 
+const PRIMER_LOW_SIGNAL_PREFIXES = [
+  "项目热启动摘要",
+  "作用：",
+  "项目概览：",
+  "当前主题：",
+  "主题索引：",
+  "架构边界：",
+  "环境约束：",
+  "关键决策：",
+  "已知问题：",
+  "高频操作：",
+  "来源节点：",
+  "类型：",
+  "标题：",
+  "记录时间：",
+  "来源：",
+];
+
+const normalizePrimerLine = (value: string): string =>
+  String(value ?? "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/^[-*]\s*/, "")
+    .replace(/^\d+\.\s*/, "")
+    .trim();
+
+const isLowSignalPrimerLine = (value: string): boolean => {
+  const normalized = normalizePrimerLine(value);
+  if (!normalized) {
+    return true;
+  }
+  if (normalized.startsWith("`projects://") || normalized.startsWith("projects://")) {
+    return true;
+  }
+  return PRIMER_LOW_SIGNAL_PREFIXES.some((prefix) => normalized.startsWith(prefix));
+};
+
+const extractConclusionSummary = (content: string): string | null => {
+  const lines = String(content ?? "").split(/\r?\n/);
+  const startIndex = lines.findIndex((line) => line.trim() === "## 结论");
+  if (startIndex < 0) {
+    return null;
+  }
+  for (const line of lines.slice(startIndex + 1)) {
+    const normalized = normalizePrimerLine(line);
+    if (!normalized) {
+      continue;
+    }
+    if (normalized.startsWith("## ")) {
+      break;
+    }
+    if (!isLowSignalPrimerLine(normalized)) {
+      return trimText(normalized, 240);
+    }
+  }
+  return null;
+};
+
+const extractPrimerSummary = (content: string): string | null => {
+  const conclusionSummary = extractConclusionSummary(content);
+  if (conclusionSummary) {
+    return conclusionSummary;
+  }
+  for (const rawLine of String(content ?? "").split(/\r?\n/)) {
+    const normalized = normalizePrimerLine(rawLine);
+    if (!normalized || isLowSignalPrimerLine(normalized)) {
+      continue;
+    }
+    return trimText(normalized, 240);
+  }
+  return null;
+};
+
 const toPrimerFactHit = (item: Record<string, unknown>): FactHit | null => {
   const uri = String(item.uri ?? "").trim();
   if (!uri) {
@@ -78,7 +151,7 @@ const toPrimerFactHit = (item: Record<string, unknown>): FactHit | null => {
   }
   const gistText = String(item.gist_text ?? "").trim();
   const content = String(item.content ?? "").trim();
-  const summary = trimText(gistText || content, 240);
+  const summary = extractPrimerSummary(content) ?? trimText(gistText || content, 240);
   if (!summary) {
     return null;
   }

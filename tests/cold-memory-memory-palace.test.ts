@@ -46,7 +46,12 @@ test("memory palace client reads project primer from digest and anchors", async 
         node: {
           uri: "projects://demo-project/digest/current",
           gist_text: "Digest primer summary",
-          content: "Long digest body",
+          content: [
+            "项目热启动摘要：`demo-project`",
+            "- 作用：进入项目时优先读这个节点，减少重复展开多个索引节点。",
+            "- 项目概览：",
+            "  - Demo Project is a local desktop tool for restoring AI CLI context.",
+          ].join("\n"),
         },
       });
     }
@@ -54,7 +59,12 @@ test("memory palace client reads project primer from digest and anchors", async 
       return createJsonResponse({
         node: {
           uri: "projects://demo-project/anchors/current",
-          content: "Current anchor title and mappings",
+          content: [
+            "- 类型：主题锚点",
+            "- 标题：`demo-focus`",
+            "## 结论",
+            "Current focus is reducing background noise in app memory bootstrap.",
+          ].join("\n"),
         },
       });
     }
@@ -70,8 +80,14 @@ test("memory palace client reads project primer from digest and anchors", async 
     });
     const results = await client.readProjectPrimer("demo-project");
     assert.equal(results.length, 2);
-    assert.equal(results[0]?.summary, "Digest primer summary");
-    assert.match(results[1]?.summary ?? "", /Current anchor/);
+    assert.equal(
+      results[0]?.summary,
+      "Demo Project is a local desktop tool for restoring AI CLI context.",
+    );
+    assert.equal(
+      results[1]?.summary,
+      "Current focus is reducing background noise in app memory bootstrap.",
+    );
     assert.equal(
       calls.some((item) => item.includes("path=demo-project%2Foverview")),
       false,
