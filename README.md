@@ -7,14 +7,28 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-6BE1C6.svg)](./LICENSE)
 [![Node 22+](https://img.shields.io/badge/node-22%2B-5FA04E.svg)](./package.json)
 
-`memory-runtime` is a hot/cold memory runtime for CLI agents.
+`memory-runtime` gives Codex, Claude, and Gemini a compact hot/cold memory layer
+for project context.
 
-It is designed to save tokens without rewriting the user request, stay fail-open
-under provider failures, and keep host integrations replaceable.
+It saves tokens without rewriting the user request, stays fail-open when memory
+providers are unavailable, and keeps host integrations replaceable.
+
+Use it when you want:
+
+- automatic project bootstrap for CLI agents
+- local hot memory with optional Memory Palace cold memory
+- safer recall for short references like `route A`, `this`, or `that`
+- explicit local skill governance without silent edits
+- public-repo-friendly export tooling for sanitized memory assets
+
+Quick links:
 
 - Chinese quick start: `README_CN.md`
+- Docker cold memory: `docs/COLD_MEMORY_DOCKER.md`
+- Configuration: `docs/CONFIGURATION.md`
+- Public export workflow: `docs/PUBLIC_EXPORT.md`
+- Troubleshooting: `docs/TROUBLESHOOTING.md`
 - Changelog: `CHANGELOG.md`
-- GitHub social preview note: use `assets/social-preview-github-4x3-upload.jpg` in repository settings
 
 ## Current status
 

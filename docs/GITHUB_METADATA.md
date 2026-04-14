@@ -8,11 +8,11 @@ Use this file when creating the public GitHub repository page.
 
 ## Short description
 
-Hot/cold memory runtime for Codex, Claude, and Gemini that saves tokens without rewriting the user prompt.
+Automatic hot/cold memory runtime for Codex, Claude, and Gemini that saves tokens without rewriting the prompt.
 
 ## Extended About text
 
-`memory-runtime` gives CLI agents a fail-open memory layer with local SQLite hot memory, optional Memory Palace cold memory, shell-based automatic bootstrap, and a Docker-ready cold-memory path for public users.
+`memory-runtime` gives CLI agents a fail-open memory layer with local SQLite hot memory, optional Memory Palace cold memory, shell-based automatic bootstrap, safer short-reference recall, and sanitized public-export tooling.
 
 ## Suggested topics
 
@@ -20,22 +20,24 @@ Hot/cold memory runtime for Codex, Claude, and Gemini that saves tokens without 
 - `llm`
 - `agent-memory`
 - `memory`
+- `context-engineering`
+- `token-optimization`
 - `codex`
 - `claude`
 - `gemini`
 - `sqlite`
 - `docker`
 - `developer-tools`
-- `context-engineering`
 - `memory-palace`
+- `cli`
 
 ## Suggested release title
 
-`v0.1.0-alpha: GitHub-first hot/cold memory runtime`
+`v0.1.1-alpha: quieter wrappers and safer public export`
 
 ## Suggested social preview caption
 
-Give Codex, Claude, and Gemini a small, stable memory layer that saves tokens without mutating the actual request.
+Give Codex, Claude, and Gemini a compact memory layer that saves tokens, stays fail-open, and keeps the real request intact.
 
 ## Suggested repository homepage
 
@@ -50,13 +52,13 @@ Only set a separate homepage after:
 
 Good first lines for the repo page:
 
-1. `Hot/cold memory runtime for CLI agents.`
+1. `Automatic hot/cold memory runtime for Codex, Claude, and Gemini.`
 2. `Saves tokens without rewriting the user prompt.`
-3. `Works with Codex, Claude, and Gemini.`
+3. `Uses local SQLite hot memory, optional Memory Palace cold memory, and shell-based bootstrap.`
 
 ## Discussions recommendation
 
-For `v0.1.0-alpha`, keep `Discussions` off.
+For the current `0.x` alpha line, keep `Discussions` off.
 
 Reason:
 

@@ -1,6 +1,6 @@
 # memory-runtime
 
-`memory-runtime` 是一套给 CLI 智能体用的冷热记忆运行时。
+`memory-runtime` 是给 Codex、Claude、Gemini 这类 CLI 智能体用的冷热记忆运行时。
 
 目标就一条：**节省 tokens，但不改写用户原始需求，不把任务带偏。**
 
@@ -13,6 +13,22 @@
 - 冷记忆 Docker：backend-only 一键部署
 - 模糊短指代保护：优先用热记忆锚点补全，没有锚点就抑制冷召回
 - skills 治理：支持审计、显式 apply、rollback、benchmark
+
+适合你在这些场景里用：
+
+- 想让 CLI 在新会话里自动吃到项目背景
+- 想先走本地热记忆，冷记忆再按需接上
+- 想让 `route A`、`这个`、`那个` 这类短指代少带偏
+- 想治理本地 skills，但不接受安装后偷偷改文件
+- 想把本地私有记忆资产安全整理成可公开的脱敏产物
+
+快速入口：
+
+- Docker 冷记忆：`docs/COLD_MEMORY_DOCKER.md`
+- 配置说明：`docs/CONFIGURATION.md`
+- 公开导出：`docs/PUBLIC_EXPORT.md`
+- 排障：`docs/TROUBLESHOOTING.md`
+- 变更记录：`CHANGELOG.md`
 
 ## 适合谁
 
