@@ -321,6 +321,7 @@ test("checkpoint merge keeps recent loops and decisions instead of wiping state"
     const capsule = await hotClient.readProjectCapsule(project.id);
     assert.equal(capsule?.openLoops.length, 1);
     assert.equal(capsule?.recentDecisions.length, 1);
+    assert.equal(capsule?.summary, "Current focus: Second pass");
   } finally {
     hotClient.close();
     rmSync(directory, { recursive: true, force: true });

@@ -54,7 +54,6 @@ const collectAnchorCandidates = (capsule: ProjectCapsule | null): readonly strin
     return [];
   }
   const items = [
-    sanitizeCheckpointSummary(capsule.summary),
     normalizeText(capsule.activeTask),
     ...capsule.recentDecisions.slice(0, 2).map((item) => normalizeText(item.summary)),
     ...capsule.openLoops.slice(0, 2).map((item) => normalizeText(item.summary)),

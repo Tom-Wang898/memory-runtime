@@ -51,12 +51,12 @@ export const resolveCheckpointSummary = (
   if (explicitSummary) {
     return explicitSummary;
   }
+  if (record.activeTask?.trim()) {
+    return `Current focus: ${record.activeTask.trim()}`;
+  }
   const storedSummary = sanitizeCheckpointSummary(currentSummary);
   if (storedSummary) {
     return storedSummary;
-  }
-  if (record.activeTask?.trim()) {
-    return `Current focus: ${record.activeTask.trim()}`;
   }
   return fallbackSummary(record.project.id);
 };

@@ -9,5 +9,9 @@
   - do not use `currentFocus` or `recentProgress`
   - do not write `memory_checkpoint` first
   - stop after answering unless the user explicitly asks to continue
+- When the user starts a new standalone question:
+  - first decide whether it is a continuation or just a new question
+  - if it is a new question, do not replay the previous answer
+  - answer the current question directly unless the user explicitly asks for a recap
 - Use `memory_search` for short references such as `this`, `that`, or `route A`.
 - Call `memory_checkpoint` only when task state actually changes.

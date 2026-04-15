@@ -155,3 +155,49 @@ test("runtime-generated checkpoint summaries do not overwrite useful summaries",
     rmSync(directory, { recursive: true, force: true });
   }
 });
+
+test("short-reference anchoring does not reuse stale capsule summary by itself", async () => {
+  const directory = mkdtempSync(join(tmpdir(), "memory-runtime-stale-summary-"));
+  const hotClient = createSqliteHotMemoryClient({
+    databasePath: join(directory, "hot-memory.db"),
+  });
+  let searchCount = 0;
+  const runtime = new MemoryRuntime(
+    createSqliteHotMemoryProvider(hotClient),
+    {
+      searchFacts: async () => [],
+      searchGists: async () => {
+        searchCount += 1;
+        return [];
+      },
+      promote: async () => {},
+    },
+    undefined,
+    hotClient.createObserver(),
+  );
+
+  try {
+    const project = createProject();
+    await runtime.checkpoint({
+      project,
+      sessionId: "session-8",
+      summary: "上一轮已经把 KeepFlow 的核心背景解释完了。",
+      activeTask: null,
+      openLoops: [],
+      recentDecisions: [],
+      workingSet: [],
+    });
+
+    const payload = await runtime.buildBootstrap({
+      project,
+      mode: "warm",
+      query: "这个",
+    });
+
+    assert.equal(searchCount, 0);
+    assert.equal(payload.diagnostics.recallQueryStrategy, "suppressed");
+  } finally {
+    hotClient.close();
+    rmSync(directory, { recursive: true, force: true });
+  }
+});

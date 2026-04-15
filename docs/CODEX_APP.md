@@ -61,6 +61,7 @@ When running inside `codex app`:
 6. for \"what do you already know\" prompts, do not write memory first and do not continue execution unless the user explicitly asks to proceed
 7. only call `memory_checkpoint` when the task state changes, a new decision is made, an open loop appears, or the user explicitly asks to record it
 8. for short references like `this`, `that`, `route A`, call `memory_search`
+9. when the user asks a new standalone question, do not replay the previous answer unless the user explicitly asks for a recap or continuation
 
 ## Validation checklist
 
