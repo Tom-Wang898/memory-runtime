@@ -3,8 +3,10 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd -- "${SCRIPT_DIR}/.." && pwd)"
+source "${SCRIPT_DIR}/_resolve-node.sh"
+NODE_BIN="$(resolve_memory_runtime_node)"
 
-exec node \
+exec "${NODE_BIN}" \
   --disable-warning=ExperimentalWarning \
   --experimental-strip-types \
   --import "${PROJECT_ROOT}/scripts/register-ts-loader.mjs" \

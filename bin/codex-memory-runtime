@@ -3,5 +3,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd -- "${SCRIPT_DIR}/.." && pwd)"
+source "${SCRIPT_DIR}/_resolve-node.sh"
+NODE_BIN="$(resolve_memory_runtime_node)"
 
-exec node "${PROJECT_ROOT}/scripts/codex-wrapper.mjs" "$@"
+exec "${NODE_BIN}" "${PROJECT_ROOT}/scripts/codex-wrapper.mjs" "$@"
