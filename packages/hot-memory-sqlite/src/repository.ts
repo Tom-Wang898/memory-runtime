@@ -3,6 +3,7 @@ import type { DatabaseSync } from "node:sqlite";
 import type {
   CapsuleRequest,
   CheckpointRecord,
+  ConstraintRecord,
   DecisionRecord,
   OpenLoop,
   PromotionJobRecord,
@@ -12,10 +13,18 @@ import type {
   WorkingSetEntry,
 } from "@memory-runtime/memory-core";
 
+export interface StoredProjectRecord {
+  readonly projectId: string;
+  readonly rootPath: string;
+  readonly updatedAt: string;
+}
+
 import {
   overrideCapsuleRequest,
   resolveCheckpointSummary,
+  sortConstraints,
   toProjectCapsule,
+  trimConstraints,
   trimDecisions,
   trimOpenLoops,
   trimWorkingSet,
@@ -56,6 +65,23 @@ const mergeRecentDecisions = (
   return trimDecisions(sortByUpdatedAtDesc([...merged.values()]));
 };
 
+const mergeConstraints = (
+  current: readonly ConstraintRecord[],
+  incoming: readonly ConstraintRecord[],
+): readonly ConstraintRecord[] => {
+  if (incoming.length === 0) {
+    return current;
+  }
+  const merged = new Map<string, ConstraintRecord>();
+  for (const item of sortConstraints([...current, ...incoming])) {
+    const key = normalizeKey(item.summary);
+    if (!merged.has(key)) {
+      merged.set(key, item);
+    }
+  }
+  return trimConstraints([...merged.values()]);
+};
+
 const mergeWorkingSet = (
   current: readonly WorkingSetEntry[],
   incoming: readonly WorkingSetEntry[],
@@ -73,14 +99,15 @@ const mergeWorkingSet = (
 const projectStateStatement = (database: DatabaseSync) =>
   database.prepare(`
     INSERT INTO project_state (
-      project_id, root_path, host, vcs_root, summary, active_task, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?)
+      project_id, root_path, host, vcs_root, summary, active_task, next_step, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(project_id) DO UPDATE SET
       root_path = excluded.root_path,
       host = excluded.host,
       vcs_root = excluded.vcs_root,
       summary = excluded.summary,
       active_task = excluded.active_task,
+      next_step = excluded.next_step,
       updated_at = excluded.updated_at
   `);
 
@@ -101,6 +128,25 @@ const readOpenLoops = (database: DatabaseSync, projectId: string): OpenLoop[] =>
       severity: row.severity as OpenLoop["severity"],
       updatedAt: String(row.updated_at),
     }));
+
+const readConstraints = (
+  database: DatabaseSync,
+  projectId: string,
+): readonly ConstraintRecord[] =>
+  sortConstraints(
+    database
+      .prepare(
+        "SELECT constraint_id, summary, priority, source_kind, updated_at FROM pinned_constraints WHERE project_id = ?",
+      )
+      .all(projectId)
+      .map((row) => ({
+        id: String(row.constraint_id),
+        summary: String(row.summary),
+        priority: row.priority as ConstraintRecord["priority"],
+        sourceKind: row.source_kind as ConstraintRecord["sourceKind"],
+        updatedAt: String(row.updated_at),
+      })),
+  );
 
 const readRecentDecisions = (
   database: DatabaseSync,
@@ -153,6 +199,29 @@ const replaceOpenLoops = (
       openLoop.summary,
       openLoop.severity,
       openLoop.updatedAt,
+    );
+  }
+};
+
+const replaceConstraints = (
+  database: DatabaseSync,
+  projectId: string,
+  constraints: readonly ConstraintRecord[],
+): void => {
+  database
+    .prepare("DELETE FROM pinned_constraints WHERE project_id = ?")
+    .run(projectId);
+  const statement = database.prepare(
+    "INSERT INTO pinned_constraints (project_id, constraint_id, summary, priority, source_kind, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
+  );
+  for (const constraint of trimConstraints(constraints)) {
+    statement.run(
+      projectId,
+      constraint.id,
+      constraint.summary,
+      constraint.priority,
+      constraint.sourceKind,
+      constraint.updatedAt,
     );
   }
 };
@@ -219,6 +288,24 @@ const writeProjectState = (
     record.project.vcsRoot,
     summary,
     record.activeTask,
+    record.nextStep ?? null,
+    updatedAt,
+  );
+};
+
+const writeCapsuleState = (
+  database: DatabaseSync,
+  capsule: ProjectCapsule,
+  updatedAt: string,
+): void => {
+  projectStateStatement(database).run(
+    capsule.project.id,
+    capsule.project.rootPath,
+    capsule.project.host,
+    capsule.project.vcsRoot,
+    capsule.summary,
+    capsule.activeTask,
+    capsule.nextStep ?? null,
     updatedAt,
   );
 };
@@ -241,8 +328,10 @@ export const readStoredProjectCapsule = (
       active_task: projectState.active_task
         ? String(projectState.active_task)
         : null,
+      next_step: projectState.next_step ? String(projectState.next_step) : null,
       updated_at: String(projectState.updated_at),
     },
+    readConstraints(database, projectId),
     readOpenLoops(database, projectId),
     readRecentDecisions(database, projectId),
     readWorkingSet(database, projectId),
@@ -262,12 +351,20 @@ export const writeCheckpointRecord = (
   record: CheckpointRecord,
 ): void => {
   const updatedAt = new Date().toISOString();
+  const currentConstraints = readConstraints(database, record.project.id);
   const currentOpenLoops = readOpenLoops(database, record.project.id);
   const currentDecisions = readRecentDecisions(database, record.project.id);
   const currentWorkingSet = readWorkingSet(database, record.project.id);
   database.exec("BEGIN");
   try {
     writeProjectState(database, record, updatedAt);
+    if (record.constraints) {
+      replaceConstraints(
+        database,
+        record.project.id,
+        mergeConstraints(currentConstraints, record.constraints),
+      );
+    }
     replaceOpenLoops(
       database,
       record.project.id,
@@ -292,6 +389,25 @@ export const writeCheckpointRecord = (
   }
 };
 
+export const replaceStoredProjectCapsule = (
+  database: DatabaseSync,
+  capsule: ProjectCapsule,
+): void => {
+  const updatedAt = new Date().toISOString();
+  database.exec("BEGIN");
+  try {
+    writeCapsuleState(database, capsule, updatedAt);
+    replaceConstraints(database, capsule.project.id, capsule.constraints);
+    replaceOpenLoops(database, capsule.project.id, capsule.openLoops);
+    replaceRecentDecisions(database, capsule.project.id, capsule.recentDecisions);
+    replaceWorkingSet(database, capsule.project.id, capsule.workingSet);
+    database.exec("COMMIT");
+  } catch (error) {
+    database.exec("ROLLBACK");
+    throw error;
+  }
+};
+
 export const readRuntimeMetrics = (
   database: DatabaseSync,
   projectId: string,
@@ -307,6 +423,20 @@ export const readRuntimeMetrics = (
       projectId: String(row.project_id),
       payload: JSON.parse(String(row.payload_json)),
       createdAt: String(row.created_at),
+    }));
+
+export const listStoredProjects = (
+  database: DatabaseSync,
+): readonly StoredProjectRecord[] =>
+  database
+    .prepare(
+      "SELECT project_id, root_path, updated_at FROM project_state ORDER BY updated_at DESC",
+    )
+    .all()
+    .map((row) => ({
+      projectId: String(row.project_id),
+      rootPath: String(row.root_path),
+      updatedAt: String(row.updated_at),
     }));
 
 export const enqueuePromotionJob = (

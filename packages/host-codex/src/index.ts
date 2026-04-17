@@ -1,6 +1,7 @@
 import type {
   BootstrapPayload,
   CapsuleRequest,
+  ConstraintRecord,
   DecisionRecord,
   HostAdapter,
   MemoryRuntime,
@@ -24,6 +25,9 @@ const renderOpenLoops = (items: readonly OpenLoop[]): string[] =>
 
 const renderWorkingSet = (items: readonly WorkingSetEntry[]): string[] =>
   items.map((item) => `${item.kind}: ${item.label} -> ${item.value}`);
+
+const renderConstraints = (items: readonly ConstraintRecord[]): string[] =>
+  items.map((item) => `[${item.priority}] ${item.summary}`);
 
 const createFallbackNotes = (request: CapsuleRequest): readonly string[] => [
   `No hot capsule found for ${request.project.id}.`,
@@ -53,6 +57,8 @@ export const renderCodexBootstrap = (payload: BootstrapPayload): string => {
     `mode: ${payload.mode}`,
     `summary: ${payload.capsule.summary}`,
     payload.capsule.activeTask ? `active_task: ${payload.capsule.activeTask}` : "",
+    payload.capsule.nextStep ? `next_step: ${payload.capsule.nextStep}` : "",
+    renderList("Constraints", renderConstraints(payload.capsule.constraints)),
     renderList("Open Loops", renderOpenLoops(payload.capsule.openLoops)),
     renderList("Recent Decisions", renderDecisions(payload.capsule.recentDecisions)),
     renderList("Working Set", renderWorkingSet(payload.capsule.workingSet)),

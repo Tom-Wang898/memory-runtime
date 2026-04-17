@@ -2,6 +2,7 @@ import { execFileSync } from "node:child_process";
 
 import type {
   CheckpointRecord,
+  ConstraintRecord,
   DecisionRecord,
   OpenLoop,
   ProjectIdentity,
@@ -41,6 +42,19 @@ const parseOpenLoop = (value: string): OpenLoop => {
   };
 };
 
+const parseConstraint = (value: string): ConstraintRecord => {
+  const [summary, priority, sourceKind] = value.split("::");
+  return {
+    id: `constraint-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
+    summary: summary.trim(),
+    priority:
+      priority === "critical" || priority === "medium" ? priority : "high",
+    sourceKind:
+      sourceKind === "system" || sourceKind === "memory" ? sourceKind : "user",
+    updatedAt: new Date().toISOString(),
+  };
+};
+
 export const collectGitWorkingSet = (
   project: ProjectIdentity,
 ): readonly WorkingSetEntry[] => {
@@ -76,6 +90,8 @@ export const buildCheckpointRecord = (input: {
   readonly sessionId: string | null;
   readonly summary?: string | null;
   readonly activeTask?: string | null;
+  readonly nextStep?: string | null;
+  readonly constraints?: readonly string[];
   readonly decisions: readonly string[];
   readonly openLoops: readonly string[];
   readonly workingSet?: readonly WorkingSetEntry[];
@@ -84,6 +100,8 @@ export const buildCheckpointRecord = (input: {
   sessionId: input.sessionId,
   summary: input.summary ?? null,
   activeTask: input.activeTask ?? null,
+  constraints: input.constraints?.map(parseConstraint),
+  nextStep: input.nextStep ?? null,
   openLoops: input.openLoops.map(parseOpenLoop),
   recentDecisions: input.decisions.map(parseDecision),
   workingSet: input.workingSet ?? collectGitWorkingSet(input.project),

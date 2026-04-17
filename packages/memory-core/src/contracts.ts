@@ -1,5 +1,7 @@
 export const CAPSULE_SECTION_KEYS = [
   "active_task",
+  "constraints",
+  "next_step",
   "open_loops",
   "recent_decisions",
   "working_set",
@@ -11,6 +13,8 @@ export type BootstrapMode = "fast" | "warm" | "cold";
 export type CapsuleSource = "hot" | "hot+cold";
 export type OpenLoopSeverity = "low" | "medium" | "high";
 export type WorkingSetKind = "file" | "command" | "error" | "note";
+export type ConstraintPriority = "critical" | "high" | "medium";
+export type ConstraintSourceKind = "user" | "system" | "memory";
 export type BootstrapRiskLevel = "normal" | "high";
 export type RecallQueryStrategy = "none" | "direct" | "anchored" | "suppressed";
 
@@ -35,6 +39,14 @@ export interface WorkingSetEntry {
   readonly weight?: number;
 }
 
+export interface ConstraintRecord {
+  readonly id: string;
+  readonly summary: string;
+  readonly priority: ConstraintPriority;
+  readonly updatedAt: string;
+  readonly sourceKind: ConstraintSourceKind;
+}
+
 export interface DecisionRecord {
   readonly id: string;
   readonly summary: string;
@@ -54,6 +66,8 @@ export interface ProjectCapsule {
   readonly project: ProjectIdentity;
   readonly summary: string;
   readonly activeTask: string | null;
+  readonly constraints: readonly ConstraintRecord[];
+  readonly nextStep: string | null;
   readonly openLoops: readonly OpenLoop[];
   readonly recentDecisions: readonly DecisionRecord[];
   readonly workingSet: readonly WorkingSetEntry[];
@@ -85,6 +99,12 @@ export interface BootstrapDiagnostics {
   readonly estimatedTokens: number;
 }
 
+export interface ContinuityDiagnostics {
+  readonly estimatedTokens: number;
+  readonly latencyMs: number;
+  readonly usedFallback: boolean;
+}
+
 export interface BootstrapPayload {
   readonly project: ProjectIdentity;
   readonly mode: BootstrapMode;
@@ -95,6 +115,16 @@ export interface BootstrapPayload {
   readonly recentProgress?: readonly string[];
   readonly fallbackNotes: readonly string[];
   readonly diagnostics: BootstrapDiagnostics;
+}
+
+export interface ContinuityPayload {
+  readonly project: ProjectIdentity;
+  readonly mode: BootstrapMode;
+  readonly capsule: ProjectCapsule | null;
+  readonly continuitySummary: string | null;
+  readonly continuityPoints: readonly string[];
+  readonly fallbackNotes: readonly string[];
+  readonly diagnostics: ContinuityDiagnostics;
 }
 
 export interface FactHit {
@@ -117,6 +147,8 @@ export interface CheckpointRecord {
   readonly sessionId: string | null;
   readonly summary?: string | null;
   readonly activeTask: string | null;
+  readonly constraints?: readonly ConstraintRecord[];
+  readonly nextStep?: string | null;
   readonly openLoops: readonly OpenLoop[];
   readonly recentDecisions?: readonly DecisionRecord[];
   readonly workingSet: readonly WorkingSetEntry[];

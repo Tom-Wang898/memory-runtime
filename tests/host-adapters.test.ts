@@ -36,6 +36,16 @@ test("codex and claude adapters render bootstrap envelopes", async () => {
       sessionId: "session-3",
       summary: "Host rendering summary",
       activeTask: "Render bootstrap",
+      nextStep: "Review migration safety",
+      constraints: [
+        {
+          id: "constraint-1",
+          summary: "Keep codex native",
+          priority: "critical",
+          sourceKind: "user",
+          updatedAt: new Date().toISOString(),
+        },
+      ],
       openLoops: [],
       recentDecisions: [],
       workingSet: [],
@@ -53,8 +63,15 @@ test("codex and claude adapters render bootstrap envelopes", async () => {
     const codexPayload = await createCodexHostAdapter(runtime).bootstrap(request);
     const claudePayload = await createClaudeHostAdapter(runtime).bootstrap(request);
 
-    assert.match(renderCodexBootstrap(codexPayload), /Memory Runtime Bootstrap/);
-    assert.match(renderClaudeBootstrap(claudePayload), /<memory_runtime_bootstrap>/);
+    const codexBootstrap = renderCodexBootstrap(codexPayload);
+    const claudeBootstrap = renderClaudeBootstrap(claudePayload);
+
+    assert.match(codexBootstrap, /Memory Runtime Bootstrap/);
+    assert.match(codexBootstrap, /next_step: Review migration safety/);
+    assert.match(codexBootstrap, /Keep codex native/);
+    assert.match(claudeBootstrap, /<memory_runtime_bootstrap>/);
+    assert.match(claudeBootstrap, /next_step=Review migration safety/);
+    assert.match(claudeBootstrap, /constraints=Keep codex native/);
   } finally {
     hotClient.close();
     rmSync(directory, { recursive: true, force: true });

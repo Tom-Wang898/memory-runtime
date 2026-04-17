@@ -12,7 +12,19 @@ const HOT_MEMORY_SCHEMA_SQL = `
     vcs_root TEXT,
     summary TEXT NOT NULL,
     active_task TEXT,
+    next_step TEXT,
     updated_at TEXT NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS pinned_constraints (
+    project_id TEXT NOT NULL,
+    constraint_id TEXT NOT NULL,
+    summary TEXT NOT NULL,
+    priority TEXT NOT NULL,
+    source_kind TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    PRIMARY KEY (project_id, constraint_id),
+    FOREIGN KEY (project_id) REFERENCES project_state(project_id) ON DELETE CASCADE
   );
 
   CREATE TABLE IF NOT EXISTS open_loops (
@@ -77,11 +89,42 @@ const applySchema = (database: DatabaseSync): void => {
   database.exec(HOT_MEMORY_SCHEMA_SQL);
 };
 
+const readUserVersion = (database: DatabaseSync): number => {
+  const row = database.prepare("PRAGMA user_version").get() as
+    | { readonly user_version?: number }
+    | undefined;
+  return Number(row?.user_version ?? 0);
+};
+
+const tableHasColumn = (
+  database: DatabaseSync,
+  tableName: string,
+  columnName: string,
+): boolean =>
+  database
+    .prepare(`PRAGMA table_info(${tableName})`)
+    .all()
+    .some((row) => String(row.name) === columnName);
+
+const migrateToSchemaVersion2 = (database: DatabaseSync): void => {
+  if (!tableHasColumn(database, "project_state", "next_step")) {
+    database.exec("ALTER TABLE project_state ADD COLUMN next_step TEXT");
+  }
+};
+
+const migrateSchema = (database: DatabaseSync, currentVersion: number): void => {
+  if (currentVersion < 2) {
+    migrateToSchemaVersion2(database);
+  }
+};
+
 export const createSqliteDatabase = (databasePath: string): DatabaseSync => {
   mkdirSync(dirname(databasePath), { recursive: true });
   const database = new DatabaseSync(databasePath);
   applyPragmas(database);
+  const currentVersion = readUserVersion(database);
   applySchema(database);
+  migrateSchema(database, currentVersion);
   database.exec(`PRAGMA user_version = ${HOT_MEMORY_SCHEMA_VERSION}`);
   return database;
 };

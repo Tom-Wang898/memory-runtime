@@ -1,6 +1,7 @@
 import type {
   CapsuleRequest,
   CheckpointRecord,
+  ConstraintRecord,
   DecisionRecord,
   OpenLoop,
   ProjectCapsule,
@@ -13,6 +14,7 @@ import {
 } from "@memory-runtime/memory-core";
 
 import {
+  MAX_PINNED_CONSTRAINTS,
   MAX_OPEN_LOOPS,
   MAX_RECENT_DECISIONS,
   MAX_WORKING_SET,
@@ -25,11 +27,35 @@ interface ProjectStateRow {
   readonly vcs_root: string | null;
   readonly summary: string;
   readonly active_task: string | null;
+  readonly next_step: string | null;
   readonly updated_at: string;
 }
 
 const fallbackSummary = (projectId: string): string =>
   `Hot memory capsule for ${projectId}`;
+
+const CONSTRAINT_PRIORITY_WEIGHT: Record<ConstraintRecord["priority"], number> = {
+  critical: 3,
+  high: 2,
+  medium: 1,
+};
+
+export const sortConstraints = (
+  constraints: readonly ConstraintRecord[],
+): readonly ConstraintRecord[] =>
+  [...constraints].sort((left, right) => {
+    const priorityDelta =
+      CONSTRAINT_PRIORITY_WEIGHT[right.priority] -
+      CONSTRAINT_PRIORITY_WEIGHT[left.priority];
+    if (priorityDelta !== 0) {
+      return priorityDelta;
+    }
+    return right.updatedAt.localeCompare(left.updatedAt);
+  });
+
+export const trimConstraints = (
+  constraints: readonly ConstraintRecord[],
+): readonly ConstraintRecord[] => sortConstraints(constraints).slice(0, MAX_PINNED_CONSTRAINTS);
 
 export const trimOpenLoops = (
   openLoops: readonly OpenLoop[],
@@ -54,6 +80,9 @@ export const resolveCheckpointSummary = (
   if (record.activeTask?.trim()) {
     return `Current focus: ${record.activeTask.trim()}`;
   }
+  if (record.nextStep?.trim()) {
+    return `Next step: ${record.nextStep.trim()}`;
+  }
   const storedSummary = sanitizeCheckpointSummary(currentSummary);
   if (storedSummary) {
     return storedSummary;
@@ -71,6 +100,7 @@ export const toProjectIdentity = (row: ProjectStateRow): ProjectIdentity => ({
 
 export const toProjectCapsule = (
   row: ProjectStateRow,
+  constraints: readonly ConstraintRecord[],
   openLoops: readonly OpenLoop[],
   recentDecisions: readonly DecisionRecord[],
   workingSet: readonly WorkingSetEntry[],
@@ -78,6 +108,8 @@ export const toProjectCapsule = (
   project: toProjectIdentity(row),
   summary: row.summary,
   activeTask: row.active_task,
+  constraints,
+  nextStep: row.next_step,
   openLoops,
   recentDecisions,
   workingSet,

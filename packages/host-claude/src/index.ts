@@ -33,6 +33,10 @@ export const renderClaudeBootstrap = (payload: BootstrapPayload): string => {
     payload.capsule.activeTask
       ? `active_task=${payload.capsule.activeTask}`
       : "",
+    payload.capsule.nextStep
+      ? `next_step=${payload.capsule.nextStep}`
+      : "",
+    `constraints=${payload.capsule.constraints.map((item) => item.summary).join(" | ")}`,
     `open_loops=${payload.capsule.openLoops.map((item) => item.summary).join(" | ")}`,
     `decisions=${payload.capsule.recentDecisions.map((item) => item.summary).join(" | ")}`,
     `facts=${payload.capsule.supportingFacts.map((item) => item.summary).join(" | ")}`,

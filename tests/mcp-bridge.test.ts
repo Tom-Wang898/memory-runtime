@@ -76,6 +76,8 @@ test("bridge handlers support checkpoint, bootstrap, search, and project state",
             projectHint: "KeepFlow",
             summary: "Bridge checkpoint summary",
             activeTask: "Verify MCP bridge",
+            nextStep: "Add constraints bridge coverage",
+            constraints: ["Keep codex native::critical::user"],
             decisions: ["Use MCP for app memory::consistency"],
             openLoops: ["Validate app path::medium"],
           },
@@ -108,11 +110,15 @@ test("bridge handlers support checkpoint, bootstrap, search, and project state",
         );
         assert.deepEqual(
           (bootstrap as { backgroundPoints: readonly string[] }).backgroundPoints,
-          ["Use MCP for app memory"],
+          ["Constraint: Keep codex native", "Use MCP for app memory"],
         );
         assert.deepEqual(
           (bootstrap as { currentFocus: readonly string[] }).currentFocus,
-          ["Validate app path", "Verify MCP bridge"],
+          [
+            "Add constraints bridge coverage",
+            "Validate app path",
+            "Verify MCP bridge",
+          ],
         );
         assert.deepEqual(
           (bootstrap as { recentProgress: readonly string[] }).recentProgress,
@@ -126,6 +132,8 @@ test("bridge handlers support checkpoint, bootstrap, search, and project state",
         });
         assert.match(JSON.stringify(state), /bridge-demo/);
         assert.match(JSON.stringify(state), /\"hasCapsule\":true/);
+        assert.match(JSON.stringify(state), /\"constraintCount\":1/);
+        assert.match(JSON.stringify(state), /\"nextStep\":\"Add constraints bridge coverage\"/);
 
         const search = await handleBridgeRequest({
           tool: "memory_search",

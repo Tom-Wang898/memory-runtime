@@ -15,18 +15,23 @@ import { createSqliteRuntimeObserver } from "./observer.js";
 import {
   buildStoredProjectCapsule,
   enqueuePromotionJob,
+  listStoredProjects,
   readPromotionJobs,
   readRuntimeMetrics,
+  replaceStoredProjectCapsule,
   readStoredProjectCapsule,
   updatePromotionJobStatus,
   writeCheckpointRecord,
+  type StoredProjectRecord,
 } from "./repository.js";
 import { createSqliteDatabase } from "./schema.js";
 
 export interface SqliteHotMemoryClient {
   close(): void;
+  listProjects(): Promise<readonly StoredProjectRecord[]>;
   readProjectCapsule(projectId: string): Promise<ProjectCapsule | null>;
   writeCheckpoint(record: CheckpointRecord): Promise<void>;
+  replaceProjectCapsule(capsule: ProjectCapsule): Promise<void>;
   buildProjectCapsule(input: CapsuleRequest): Promise<ProjectCapsule | null>;
   createObserver(): MemoryRuntimeObserver;
   readRuntimeMetrics(projectId: string, limit?: number): Promise<readonly RuntimeMetricRecord[]>;
@@ -43,9 +48,11 @@ export interface SqliteHotMemoryProviderConfig {
 
 const createClientMethods = (database: DatabaseSync): SqliteHotMemoryClient => ({
   close: () => database.close(),
+  listProjects: async () => listStoredProjects(database),
   readProjectCapsule: async (projectId) =>
     readStoredProjectCapsule(database, projectId),
   writeCheckpoint: async (record) => writeCheckpointRecord(database, record),
+  replaceProjectCapsule: async (capsule) => replaceStoredProjectCapsule(database, capsule),
   buildProjectCapsule: async (input) => buildStoredProjectCapsule(database, input),
   createObserver: () => createSqliteRuntimeObserver(database),
   readRuntimeMetrics: async (projectId, limit) =>

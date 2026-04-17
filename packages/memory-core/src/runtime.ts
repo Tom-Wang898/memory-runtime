@@ -3,6 +3,8 @@ import type {
   BootstrapPayload,
   CapsuleRequest,
   ColdMemoryProvider,
+  ContinuityDiagnostics,
+  ContinuityPayload,
   FactHit,
   HotMemoryProvider,
   ProjectCapsule,
@@ -90,6 +92,9 @@ const mergeFactHits = (
 const trimSummary = (summary: string, limit: number): string =>
   summary.length <= limit ? summary : `${summary.slice(0, Math.max(0, limit - 1)).trim()}…`;
 
+const estimateTextTokens = (value: string): number =>
+  Math.max(1, Math.ceil(value.trim().length / 4));
+
 const uniqueNonEmpty = (items: readonly (string | null | undefined)[]): readonly string[] =>
   [...new Set(items.map((item) => String(item ?? "").trim()).filter(Boolean))];
 
@@ -139,6 +144,7 @@ const buildBackgroundPoints = (
 ): readonly string[] => {
   const explicitPoints = uniqueNonEmpty([
     ...backgroundFacts.map((item) => item.summary),
+    ...(capsule?.constraints ?? []).slice(0, 2).map((item) => `Constraint: ${item.summary}`),
     ...(capsule?.recentDecisions ?? []).map((item) => item.summary),
   ]).slice(0, 4);
   if (explicitPoints.length > 0) {
@@ -155,6 +161,7 @@ const buildCurrentFocus = (capsule: ProjectCapsule | null): readonly string[] =>
     return [];
   }
   return uniqueNonEmpty([
+    capsule.nextStep,
     ...capsule.openLoops.map((item) => item.summary),
     capsule.activeTask,
   ]).slice(0, 4);
@@ -170,6 +177,71 @@ const buildRecentProgress = (capsule: ProjectCapsule | null): readonly string[] 
   ]).slice(0, 3);
 };
 
+const buildContinuitySummary = (capsule: ProjectCapsule | null): string | null => {
+  if (!capsule) {
+    return null;
+  }
+  return trimSummary(
+    capsule.nextStep ??
+      capsule.activeTask ??
+      capsule.recentDecisions[0]?.summary ??
+      capsule.summary,
+    160,
+  );
+};
+
+const buildContinuityPoints = (capsule: ProjectCapsule | null): readonly string[] => {
+  if (!capsule) {
+    return [];
+  }
+
+  const sections = [
+    ...capsule.constraints.slice(0, 3).map((item) => `Constraint: ${item.summary}`),
+    capsule.nextStep ? `Next: ${capsule.nextStep}` : null,
+    ...capsule.recentDecisions
+      .slice(0, 2)
+      .map((item) => `Decision: ${item.summary} | reason: ${item.reason}`),
+    ...capsule.openLoops.slice(0, 2).map((item) => `Loop: [${item.severity}] ${item.summary}`),
+    ...capsule.workingSet
+      .slice(0, 2)
+      .map((item) => `Working set: ${item.kind} ${item.label} -> ${item.value}`),
+  ];
+
+  return uniqueNonEmpty(sections).slice(0, 8);
+};
+
+const trimContinuityPointsToBudget = (
+  summary: string | null,
+  points: readonly string[],
+  hardLimitTokens: number,
+): readonly string[] => {
+  const current = [...points];
+  while (
+    estimateTextTokens(summary ?? "") +
+      current.reduce((total, item) => total + estimateTextTokens(item), 0) >
+    hardLimitTokens
+  ) {
+    if (current.length === 0) {
+      break;
+    }
+    current.pop();
+  }
+  return current;
+};
+
+const createContinuityDiagnostics = (
+  latencyMs: number,
+  summary: string | null,
+  points: readonly string[],
+  capsule: ProjectCapsule | null,
+): ContinuityDiagnostics => ({
+  estimatedTokens:
+    estimateTextTokens(summary ?? "") +
+    points.reduce((total, item) => total + estimateTextTokens(item), 0),
+  latencyMs,
+  usedFallback: capsule === null,
+});
+
 const createPrimerBackfilledCapsule = (
   request: CapsuleRequest,
   supportingFacts: readonly FactHit[],
@@ -183,6 +255,8 @@ const createPrimerBackfilledCapsule = (
     project: request.project,
     summary,
     activeTask: activeTask || null,
+    constraints: [],
+    nextStep: null,
     openLoops: [],
     recentDecisions: [],
     workingSet: [],
@@ -221,6 +295,9 @@ const trimCapsuleToBudget = (
     if (current.openLoops.length > 0) {
       current = { ...current, openLoops: current.openLoops.slice(0, -1) };
       continue;
+    }
+    if (current.activeTask) {
+      current = { ...current, activeTask: trimSummary(current.activeTask, 120) };
     }
     current = { ...current, summary: trimSummary(current.summary, 220) };
     break;
@@ -379,15 +456,75 @@ export class MemoryRuntime {
     };
   }
 
+  async buildContinuity(request: CapsuleRequest): Promise<ContinuityPayload> {
+    const startedAt = Date.now();
+    const budget = resolveTokenBudget(request.budget ?? DEFAULT_TOKEN_BUDGET);
+    const effectiveRequest = { ...request, budget };
+    const capsule = await this.hotMemory.buildCapsule(effectiveRequest);
+
+    if (!capsule) {
+      const latencyMs = Date.now() - startedAt;
+      return {
+        project: effectiveRequest.project,
+        mode: effectiveRequest.mode,
+        capsule: null,
+        continuitySummary: null,
+        continuityPoints: [],
+        fallbackNotes: [
+          `No hot continuity found for ${effectiveRequest.project.id}.`,
+          "Continue with the raw user request and live repository context.",
+        ],
+        diagnostics: createContinuityDiagnostics(latencyMs, null, [], null),
+      };
+    }
+
+    const continuitySummary = buildContinuitySummary(capsule);
+    const continuityPoints = trimContinuityPointsToBudget(
+      continuitySummary,
+      buildContinuityPoints(capsule),
+      Math.min(220, budget.hardLimitTokens),
+    );
+    const latencyMs = Date.now() - startedAt;
+
+    await this.recordMetric({
+      metricType: "continuity",
+      projectId: effectiveRequest.project.id,
+      payload: {
+        estimatedTokens:
+          estimateTextTokens(continuitySummary ?? "") +
+          continuityPoints.reduce((total, item) => total + estimateTextTokens(item), 0),
+        pointCount: continuityPoints.length,
+      },
+      createdAt: new Date().toISOString(),
+    });
+
+    return {
+      project: effectiveRequest.project,
+      mode: effectiveRequest.mode,
+      capsule,
+      continuitySummary,
+      continuityPoints,
+      fallbackNotes: [],
+      diagnostics: createContinuityDiagnostics(
+        latencyMs,
+        continuitySummary,
+        continuityPoints,
+        capsule,
+      ),
+    };
+  }
+
   async checkpoint(record: import("./contracts.js").CheckpointRecord): Promise<void> {
     await this.hotMemory.checkpoint(record);
     await this.recordMetric({
       metricType: "checkpoint",
       projectId: record.project.id,
       payload: {
+        constraintCount: record.constraints?.length ?? 0,
         openLoopCount: record.openLoops.length,
         decisionCount: record.recentDecisions?.length ?? 0,
         workingSetCount: record.workingSet.length,
+        hasNextStep: Boolean(record.nextStep),
       },
       createdAt: new Date().toISOString(),
     });

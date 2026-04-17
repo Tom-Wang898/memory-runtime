@@ -1,4 +1,5 @@
 import type {
+  ConstraintRecord,
   FactHit,
   OpenLoop,
   ProjectCapsule,
@@ -14,12 +15,20 @@ const estimateOpenLoopTokens = (item: OpenLoop): number =>
 const estimateWorkingSetTokens = (item: WorkingSetEntry): number =>
   estimateTextTokens(`${item.kind} ${item.label} ${item.value}`);
 
+const estimateConstraintTokens = (item: ConstraintRecord): number =>
+  estimateTextTokens(`${item.priority} ${item.sourceKind} ${item.summary}`);
+
 const estimateFactTokens = (item: FactHit): number =>
   estimateTextTokens(`${item.summary} ${item.sourceUri}`);
 
 export const estimateCapsuleTokens = (capsule: ProjectCapsule): number => {
   const summaryTokens = estimateTextTokens(capsule.summary);
   const taskTokens = estimateTextTokens(capsule.activeTask ?? "");
+  const constraintTokens = capsule.constraints.reduce(
+    (total, item) => total + estimateConstraintTokens(item),
+    0,
+  );
+  const nextStepTokens = estimateTextTokens(capsule.nextStep ?? "");
   const openLoopTokens = capsule.openLoops.reduce(
     (total, item) => total + estimateOpenLoopTokens(item),
     0,
@@ -36,5 +45,14 @@ export const estimateCapsuleTokens = (capsule: ProjectCapsule): number => {
     (total, item) => total + estimateFactTokens(item),
     0,
   );
-  return summaryTokens + taskTokens + openLoopTokens + decisionTokens + workingSetTokens + factTokens;
+  return (
+    summaryTokens +
+    taskTokens +
+    constraintTokens +
+    nextStepTokens +
+    openLoopTokens +
+    decisionTokens +
+    workingSetTokens +
+    factTokens
+  );
 };
