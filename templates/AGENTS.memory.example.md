@@ -20,6 +20,16 @@
   - stop after answering unless the user explicitly asks to continue
 - When the user starts a new standalone question:
   - first decide whether it is a continuation or a new question
+  - if the previous turn was only “remember this / checkpoint / save state”, default the next turn to a new question unless it is an obviously short continuation
+  - if the new query includes explicit topic-shift signals such as “back to”, “switch to”, “回到”, “文档”, or “标题”, force it onto the new-question path
+  - latest user turn wins: any unfinished draft from the previous turn must be discarded if it does not directly answer the newest user message
+  - if the new turn is feedback, a correction, or a new request, handle that newest feedback first instead of replaying the previous answer
+  - if the newest user turn is a short continuation such as “continue”, “go on”, “继续”, “继续吧”, or “接着做”:
+    - treat it as an execution baton, not a recap request
+    - move directly to the next concrete action or the next blocking step
+    - do not restate the previous answer or re-summarize completed work unless the user explicitly asks for a recap
+    - if the draft reads like a recap, discard it and regenerate in advance-only mode
+  - before replying, check whether the draft is directly answering the latest user message; if not, discard and regenerate
   - if it is a new question, do not replay the previous answer
   - answer the current question directly unless the user explicitly asks for a recap
 - Call `hmctl checkpoint` only when task state actually changes, a new decision is made, or the user explicitly asks to record memory.

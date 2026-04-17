@@ -5,6 +5,7 @@ export interface ContextRouteDecision {
   readonly reason:
     | "no_query"
     | "continuation_query"
+    | "topic_shift_query"
     | "deep_history_query"
     | "explicit_query";
   readonly normalizedQuery: string | null;
@@ -23,6 +24,12 @@ const DEEP_HISTORY_PATTERNS = [
   /^(?:what do you know|what do you already know|summari[sz]e what you know)/i,
   /(?:背景|已知|历史|之前|为什么|原因|决策|runbook|issue|bug|故障|复盘)/i,
   /\b(?:history|decision|runbook|issue|bug|why)\b/i,
+];
+
+const TOPIC_SHIFT_PATTERNS = [
+  /^(?:先回到|回到|现在回到|回头看|切回|切到|转到|转回|另外|换个问题|回到文档|先看文档|先处理文档)/i,
+  /^(?:back to|switch to|return to|move to|another question|new question)/i,
+  /(?:文档|标题|README|发布说明|方案|计划|标题可能需要修改)/i,
 ];
 
 const MAX_CONTINUATION_QUERY_LENGTH = 64;
@@ -49,6 +56,14 @@ export const decideContextRoute = (
     return {
       route: "bootstrap",
       reason: "deep_history_query",
+      normalizedQuery,
+    };
+  }
+
+  if (matchesAny(normalizedQuery, TOPIC_SHIFT_PATTERNS)) {
+    return {
+      route: "bootstrap",
+      reason: "topic_shift_query",
       normalizedQuery,
     };
   }

@@ -58,6 +58,17 @@ test("decideContextRoute chooses bootstrap for deep-history query", () => {
   });
 });
 
+test("decideContextRoute chooses bootstrap for explicit topic-shift query", () => {
+  assert.deepEqual(
+    decideContextRoute("先回到文档书写那里，文档的标题可能需要修改"),
+    {
+      route: "bootstrap",
+      reason: "topic_shift_query",
+      normalizedQuery: "先回到文档书写那里，文档的标题可能需要修改",
+    },
+  );
+});
+
 test("hmctl context auto-routes between primer, continuity, and bootstrap", () => {
   const sandboxRoot = mkdtempSync(join(tmpdir(), "memory-runtime-context-route-"));
   const projectRoot = join(sandboxRoot, "project");
@@ -120,6 +131,20 @@ test("hmctl context auto-routes between primer, continuity, and bootstrap", () =
     ) as { project: { id: string }; diagnostics: { modeApplied: string } };
     assert.match(bootstrapResult.project.id, /^project-/);
     assert.equal(bootstrapResult.diagnostics.modeApplied, "warm");
+
+    const topicShiftBootstrap = runHmctl(
+      [
+        "context",
+        "--cwd",
+        projectRoot,
+        "--query",
+        "先回到文档书写那里，文档的标题可能需要修改",
+        "--json",
+      ],
+      env,
+    ) as { project: { id: string }; diagnostics: { modeApplied: string } };
+    assert.match(topicShiftBootstrap.project.id, /^project-/);
+    assert.equal(topicShiftBootstrap.diagnostics.modeApplied, "warm");
   } finally {
     rmSync(sandboxRoot, { recursive: true, force: true });
   }

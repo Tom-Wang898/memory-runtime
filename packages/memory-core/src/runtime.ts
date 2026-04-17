@@ -98,6 +98,12 @@ const estimateTextTokens = (value: string): number =>
 const uniqueNonEmpty = (items: readonly (string | null | undefined)[]): readonly string[] =>
   [...new Set(items.map((item) => String(item ?? "").trim()).filter(Boolean))];
 
+const normalizeLineKey = (value: string | null | undefined): string =>
+  String(value ?? "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
+
 const splitSummaryLines = (summary: string): readonly string[] =>
   summary
     .split(/\r?\n|;/)
@@ -177,34 +183,56 @@ const buildRecentProgress = (capsule: ProjectCapsule | null): readonly string[] 
   ]).slice(0, 3);
 };
 
+const hasActionableContinuity = (capsule: ProjectCapsule | null): boolean => {
+  if (!capsule) {
+    return false;
+  }
+  return Boolean(
+    capsule.nextStep?.trim() ||
+      capsule.activeTask?.trim() ||
+      capsule.openLoops[0]?.summary?.trim() ||
+      capsule.workingSet[0]?.value?.trim(),
+  );
+};
+
 const buildContinuitySummary = (capsule: ProjectCapsule | null): string | null => {
   if (!capsule) {
     return null;
   }
-  return trimSummary(
-    capsule.nextStep ??
-      capsule.activeTask ??
-      capsule.recentDecisions[0]?.summary ??
-      capsule.summary,
-    160,
-  );
+  const preferred = uniqueNonEmpty([
+    capsule.nextStep,
+    capsule.activeTask,
+    capsule.openLoops[0]?.summary,
+  ])[0];
+  return preferred ? trimSummary(preferred, 160) : null;
 };
 
-const buildContinuityPoints = (capsule: ProjectCapsule | null): readonly string[] => {
+const buildContinuityPoints = (
+  capsule: ProjectCapsule | null,
+  summary: string | null,
+): readonly string[] => {
   if (!capsule) {
     return [];
   }
 
+  const actionable = hasActionableContinuity(capsule);
+  const summaryKey = normalizeLineKey(summary);
+  const nextPoint =
+    capsule.nextStep && normalizeLineKey(capsule.nextStep) !== summaryKey
+      ? `Next: ${capsule.nextStep}`
+      : null;
   const sections = [
     ...capsule.constraints.slice(0, 3).map((item) => `Constraint: ${item.summary}`),
-    capsule.nextStep ? `Next: ${capsule.nextStep}` : null,
-    ...capsule.recentDecisions
-      .slice(0, 2)
-      .map((item) => `Decision: ${item.summary} | reason: ${item.reason}`),
+    nextPoint,
     ...capsule.openLoops.slice(0, 2).map((item) => `Loop: [${item.severity}] ${item.summary}`),
     ...capsule.workingSet
       .slice(0, 2)
       .map((item) => `Working set: ${item.kind} ${item.label} -> ${item.value}`),
+    ...(actionable
+      ? capsule.recentDecisions
+          .slice(0, 2)
+          .map((item) => `Decision: ${item.summary} | reason: ${item.reason}`)
+      : []),
   ];
 
   return uniqueNonEmpty(sections).slice(0, 8);
@@ -239,7 +267,7 @@ const createContinuityDiagnostics = (
     estimateTextTokens(summary ?? "") +
     points.reduce((total, item) => total + estimateTextTokens(item), 0),
   latencyMs,
-  usedFallback: capsule === null,
+  usedFallback: capsule === null || (!summary && points.length === 0),
 });
 
 const createPrimerBackfilledCapsule = (
@@ -481,10 +509,11 @@ export class MemoryRuntime {
     const continuitySummary = buildContinuitySummary(capsule);
     const continuityPoints = trimContinuityPointsToBudget(
       continuitySummary,
-      buildContinuityPoints(capsule),
+      buildContinuityPoints(capsule, continuitySummary),
       Math.min(220, budget.hardLimitTokens),
     );
     const latencyMs = Date.now() - startedAt;
+    const hasContinuityOutput = Boolean(continuitySummary) || continuityPoints.length > 0;
 
     await this.recordMetric({
       metricType: "continuity",
@@ -504,7 +533,12 @@ export class MemoryRuntime {
       capsule,
       continuitySummary,
       continuityPoints,
-      fallbackNotes: [],
+      fallbackNotes: hasContinuityOutput
+        ? []
+        : [
+            `No actionable continuity found for ${effectiveRequest.project.id}.`,
+            "Continue from the latest user message and live repository context.",
+          ],
       diagnostics: createContinuityDiagnostics(
         latencyMs,
         continuitySummary,
