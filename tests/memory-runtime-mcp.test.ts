@@ -1,15 +1,19 @@
 import assert from "node:assert/strict";
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { spawn } from "node:child_process";
 import test from "node:test";
+import { fileURLToPath } from "node:url";
 
 interface JsonRpcResponse {
   readonly id?: string | number | null;
   readonly result?: unknown;
   readonly error?: { code: number; message: string };
 }
+
+const TEST_FILE_PATH = fileURLToPath(import.meta.url);
+const REPO_ROOT = dirname(dirname(TEST_FILE_PATH));
 
 const encodeMessage = (payload: unknown): string => {
   const body = JSON.stringify(payload);
@@ -62,7 +66,7 @@ test("memory-runtime MCP server handles initialize, tools/list, and tools/call",
       "./scripts/memory-runtime-mcp.ts",
     ],
     {
-      cwd: "/Users/tomwang/Documents/Git/memory-runtime",
+      cwd: REPO_ROOT,
       env: {
         ...process.env,
         MEMORY_RUNTIME_HOT_DB_PATH: hotDbPath,

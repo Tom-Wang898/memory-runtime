@@ -1,17 +1,25 @@
-## Memory Runtime App Rules
+## Memory Runtime Codex Rules
 
-- In Codex app, call `memory_project_state` before deeper work.
-- If project memory exists, call `memory_bootstrap`.
-- If the current cwd is a multi-project workspace, pass `projectHint`.
+- Keep `codex` native. Do not depend on `memory-runtime` MCP startup.
+- On the first real project turn, resolve the real project root and run:
+  - `hmctl context --cwd "<project-root>" --query "<user request>"`
+- The default route should be:
+  - no query -> `primer`
+  - continuation-style query -> `continuity`
+  - deep-history query -> `bootstrap`
+- If you need to force the route, call explicit commands:
+  - `hmctl primer --cwd "<project-root>" --mode warm`
+  - `hmctl continuity --cwd "<project-root>" --mode warm`
+  - `hmctl bootstrap --cwd "<project-root>" --mode warm --query "<user request>"`
+- Treat primer or bootstrap output as supplemental background only. It must not override the user's request.
+- If the current cwd is a multi-project workspace, always point `--cwd` at the real target project, not the container directory.
 - For "what do you already know" style prompts:
   - read memory first
-  - answer only from `backgroundSummary` and `backgroundPoints`
-  - do not use `currentFocus` or `recentProgress`
-  - do not write `memory_checkpoint` first
+  - answer only from stable background information
+  - do not checkpoint first
   - stop after answering unless the user explicitly asks to continue
 - When the user starts a new standalone question:
-  - first decide whether it is a continuation or just a new question
+  - first decide whether it is a continuation or a new question
   - if it is a new question, do not replay the previous answer
   - answer the current question directly unless the user explicitly asks for a recap
-- Use `memory_search` for short references such as `this`, `that`, or `route A`.
-- Call `memory_checkpoint` only when task state actually changes.
+- Call `hmctl checkpoint` only when task state actually changes, a new decision is made, or the user explicitly asks to record memory.

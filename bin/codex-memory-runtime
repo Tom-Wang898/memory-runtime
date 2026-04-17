@@ -6,4 +6,31 @@ PROJECT_ROOT="$(cd -- "${SCRIPT_DIR}/.." && pwd)"
 source "${SCRIPT_DIR}/_resolve-node.sh"
 NODE_BIN="$(resolve_memory_runtime_node)"
 
+has_positional=0
+skip_next=0
+for arg in "$@"; do
+  if [[ "${skip_next}" -eq 1 ]]; then
+    skip_next=0
+    continue
+  fi
+  case "${arg}" in
+    -c|--config|--enable|--disable|-i|--image|-m|--model|--local-provider|-p|--profile|-s|--sandbox|-a|--ask-for-approval|--remote|--remote-auth-token-env|-C|--cd|--add-dir|--output-schema|--color|-o|--output-last-message)
+      skip_next=1
+      ;;
+    --*)
+      ;;
+    -*)
+      ;;
+    *)
+      has_positional=1
+      break
+      ;;
+  esac
+done
+
+if [[ "${has_positional}" -eq 0 ]]; then
+  CODEX_BIN="$(command -v codex)"
+  exec env MEMORY_RUNTIME_DISABLE=1 "${CODEX_BIN}" "$@"
+fi
+
 exec "${NODE_BIN}" "${PROJECT_ROOT}/scripts/codex-wrapper.mjs" "$@"

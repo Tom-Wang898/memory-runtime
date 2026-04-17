@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 
 const PROJECT_ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 const HMCTL_PATH = process.env.MEMORY_RUNTIME_HMCTL_PATH ?? join(PROJECT_ROOT, "bin", "hmctl");
+const CODEX_BIN = process.env.MEMORY_RUNTIME_CODEX_BIN ?? "codex";
 const KNOWN_SUBCOMMANDS = new Set([
   "exec",
   "review",
@@ -106,22 +107,37 @@ const runCheckpoint = (cwd, activeTask) => {
   );
 };
 
+const passthroughCodex = (args) => {
+  const result = spawnSync(CODEX_BIN, args, {
+    stdio: "inherit",
+    env: {
+      ...process.env,
+      MEMORY_RUNTIME_DISABLE: "1",
+    },
+  });
+  process.exit(result.status ?? 0);
+};
+
 const main = () => {
   if (process.env.MEMORY_RUNTIME_DISABLE === "1") {
-    const passthrough = spawnSync("codex", process.argv.slice(2), { stdio: "inherit" });
-    process.exit(passthrough.status ?? 0);
+    passthroughCodex(process.argv.slice(2));
   }
 
   const args = process.argv.slice(2);
   const cwd = process.cwd();
   if (args.some((value) => PASSTHROUGH_FLAGS.has(value))) {
-    const passthrough = spawnSync("codex", args, { stdio: "inherit" });
-    process.exit(passthrough.status ?? 0);
+    passthroughCodex(args);
   }
   const firstPositional = findFirstPositional(args);
   const subcommand = firstPositional.value && KNOWN_SUBCOMMANDS.has(firstPositional.value)
     ? firstPositional.value
     : null;
+
+  // Bare interactive TUI sessions do not need prompt injection. Bypass the
+  // wrapper so Codex starts directly with the cleanest possible stdio chain.
+  if (!subcommand && firstPositional.value === null) {
+    passthroughCodex(args);
+  }
 
   let finalArgs = args;
   let activeTask = null;
@@ -153,7 +169,13 @@ const main = () => {
     }
   }
 
-  const result = spawnSync("codex", finalArgs, { stdio: "inherit" });
+  const result = spawnSync(CODEX_BIN, finalArgs, {
+    stdio: "inherit",
+    env: {
+      ...process.env,
+      MEMORY_RUNTIME_DISABLE: "1",
+    },
+  });
   runCheckpoint(cwd, activeTask);
   process.exit(result.status ?? 0);
 };

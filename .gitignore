@@ -20,3 +20,4 @@ playwright-report
 snapshots
 test-results
 .verification-build
+scripts/*.bak-*

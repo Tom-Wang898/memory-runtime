@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import {
   chmodSync,
+  existsSync,
   mkdirSync,
   mkdtempSync,
   readFileSync,
@@ -22,10 +23,12 @@ const createExecutable = (path: string, content: string): void => {
 };
 
 const readLines = (path: string): readonly string[] =>
-  readFileSync(path, "utf8")
-    .split("\0")
-    .map((line) => line.trim())
-    .filter(Boolean);
+  existsSync(path)
+    ? readFileSync(path, "utf8")
+        .split("\0")
+        .map((line) => line.trim())
+        .filter(Boolean)
+    : [];
 
 const buildFakeCommands = (sandboxRoot: string, commandName: string) => {
   const binRoot = join(sandboxRoot, "bin");
