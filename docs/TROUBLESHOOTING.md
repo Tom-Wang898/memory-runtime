@@ -1,12 +1,13 @@
 # Troubleshooting
 
-## Wrappers are not active
+## Shell integration is not active
 
 Symptoms:
 
-- `type codex` does not show a shell function
+- `type codex` does not resolve to the native host CLI
 - `type claude` does not show a shell function
 - `type gemini` does not show a shell function
+- `type hmctl` does not show a shell function
 
 Fix:
 
@@ -38,8 +39,50 @@ type gemini
 Expected shape:
 
 - `hmctl` resolves to `memory-runtime/bin/hmctl`
-- `codex` resolves to the shell function installed by `install-shell-integration.sh`
+- `codex` resolves to the native host CLI
 - `gemini` resolves to the shell function installed by `install-shell-integration.sh`
+
+## Primer cache never appears
+
+Check:
+
+```bash
+type hmctl
+hmctl primer --cwd "$(pwd)" --mode warm --json
+```
+
+Expected:
+
+- the command returns `ok: true`
+- the result includes a cache `path`
+- repeated calls without `--force` should switch to `source: "cache"`
+
+If it keeps returning `source: "fresh"` forever, check whether your shell is
+changing directories into a real project root or a throwaway folder that should
+not be primed.
+
+## Continuity cache is missing or stale
+
+Check:
+
+```bash
+hmctl continuity --cwd "$(pwd)" --json
+hmctl compact --cwd "$(pwd)" --dry-run
+```
+
+Expected:
+
+- `hmctl continuity` returns `ok: true` with either `source: "cache"` or `source: "fresh"`
+- `hmctl compact --dry-run` reports whether stale hot memory would actually change
+
+If continuity is stale, run:
+
+```bash
+hmctl compact --cwd "$(pwd)"
+```
+
+That refreshes the hot capsule, rewrites the continuity cache, and optionally
+lets later flows refresh primer separately.
 
 ## Current shell still uses the old commands
 
@@ -59,8 +102,10 @@ or just open a new terminal tab.
 
 That was old wrapper behavior.
 
-Current wrappers only inject bootstrap automatically when there is an explicit
-initial prompt.
+Current Codex integration keeps `codex` native.
+
+Only explicit helper flows such as `hmctl bootstrap` or non-interactive wrapper
+paths should inject memory.
 
 Plain interactive launches such as:
 
@@ -162,13 +207,19 @@ Use:
 export MEMORY_RUNTIME_DISABLE=1
 ```
 
-That makes the wrappers call the underlying CLI directly.
+That only affects the Claude and Gemini wrappers.
+
+Native Codex is already unaffected. If you want to bypass memory in Codex, stop
+calling `hmctl context`, `hmctl primer`, `hmctl continuity`, or `hmctl bootstrap`
+from your project instructions.
 
 ## I want to test the runtime without touching real work
 
 Use:
 
 ```bash
+hmctl context --cwd "$(pwd)" --query "continue" --json
+hmctl continuity --cwd "$(pwd)" --json
 hmctl bootstrap --cwd "$(pwd)" --mode warm --query "runtime smoke test" --json
 npm run check:all
 ```

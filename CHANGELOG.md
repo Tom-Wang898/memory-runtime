@@ -13,6 +13,10 @@ The format is inspired by Keep a Changelog.
 - social preview guidance and Discussions recommendation
 - scoped cold-recall anchoring for ambiguous short references
 - regression tests for anchored recall, suppression fallback, and summary sanitization
+- routed context entrypoint via `hmctl context`
+- dedicated continuity payloads and continuity cache
+- hot-memory compactor plus `hmctl compact` and `hmctl compact-all`
+- hot-memory schema v2 with pinned constraints and next-step persistence
 
 ### Changed
 
@@ -20,6 +24,8 @@ The format is inspired by Keep a Changelog.
 - GitHub metadata now includes a clear Discussions policy for the alpha phase
 - wrappers no longer write synthetic automatic checkpoint summaries into hot memory
 - cold recall now suppresses ambiguous short queries when no hot-memory anchor exists
+- native Codex path now routes reads through `primer / continuity / bootstrap`
+- shell integration now supports throttled background compaction for active projects
 
 ### Fixed
 

@@ -9,7 +9,7 @@
 - 热记忆：本地 SQLite
 - 冷记忆：Memory Palace
 - 主机接入：Codex / Claude / Gemini
-- 自动方式：shell wrapper
+- Codex 走原生命令，记忆接入改走 `AGENTS + hmctl`
 - 冷记忆 Docker：backend-only 一键部署
 - 模糊短指代保护：优先用热记忆锚点补全，没有锚点就抑制冷召回
 - skills 治理：支持审计、显式 apply、rollback、benchmark
@@ -81,7 +81,7 @@ source ~/.zshrc
 source ~/.bashrc
 ```
 
-### 3. 验证 wrapper 已接管
+### 3. 验证命令入口
 
 ```bash
 type codex
@@ -90,13 +90,58 @@ type gemini
 type hmctl
 ```
 
-### 4. 验证热记忆可用
+预期：
+
+- `codex` 保持宿主原生命令
+- `hmctl` 可用
+- `claude` / `gemini` 仍可按需使用 shell 集成
+
+### 4. 验证路由化上下文可用
 
 ```bash
+hmctl primer --cwd "$(pwd)" --mode warm --json
+hmctl continuity --cwd "$(pwd)" --json
+hmctl context --cwd "$(pwd)" --query "继续当前路线" --json
 hmctl bootstrap --cwd "$(pwd)" --mode warm --query "runtime smoke test" --json
 ```
 
-如果到这一步就停，也已经能用热记忆模式。
+如果到这一步就停，也已经能用原生 Codex + sidecar primer 模式。
+
+预期：
+
+- `hmctl primer` 返回小而稳的项目背景摘要，并写入 primer cache
+- `hmctl continuity` 返回用于承接型问题的小型连续性包
+- `hmctl context` 会在 primer / continuity / bootstrap 之间自动选路
+- `hmctl bootstrap` 在需要更强上下文时返回完整版背景
+
+## 为什么路由化上下文更省 tokens
+
+Codex 的推荐路径不是每次都塞完整 bootstrap，而是：
+
+1. 先读 compact primer
+2. 承接型问题优先读 `continuity`
+3. 不够再回退到 `hmctl bootstrap`
+
+这样省 tokens 的原因很直接：
+
+- primer 只保留一条背景摘要和少量去重后的 points / focus / recent
+- continuity 只保留当前路线、硬约束、next step、open loops 这类最值钱的信息
+- primer 会按项目缓存，重复进入同一项目时不用每次重新拼完整上下文
+- continuity 也单独缓存，所以“继续 / A 方案 / 下一步”这类问题不用每次都打 full bootstrap
+- bootstrap 还是同一套 hot/cold runtime，只是留给真正需要更多历史信息的场景
+
+你可以直接跑：
+
+```bash
+npm run bench:tokens
+```
+
+现在这个 benchmark 会同时比较：
+
+- compact primer
+- continuity
+- 完整 Codex bootstrap envelope
+- 朴素 JSON 上下文体积
 
 ### 5. 可选：审计本地 skills，但不改文件
 
@@ -189,7 +234,7 @@ source ~/.memory-runtime/env.sh
 - 自动开启 `projects` 域
 - 把 `memory-runtime` 需要的环境变量写到 `~/.memory-runtime/env.sh`
 
-### 方案 C：你有本地 checkout，想让 wrapper 自动拉起 Python 后端
+### 方案 C：你有本地 checkout，想让 runtime 自动拉起 Python 后端
 
 ```bash
 export MEMORY_RUNTIME_MP_AUTOSTART=1
@@ -215,6 +260,9 @@ npm run bench:tokens
 ```
 
 ```bash
+hmctl context --cwd "$(pwd)" --query "继续" --json
+hmctl continuity --cwd "$(pwd)" --json
+hmctl compact --cwd "$(pwd)" --dry-run
 hmctl bootstrap --cwd "$(pwd)" --mode warm --query "debug query" --json
 hmctl checkpoint --cwd "$(pwd)" --summary "checkpoint summary"
 hmctl inspect --cwd "$(pwd)"
@@ -235,15 +283,14 @@ source ~/.zshrc
 
 或者直接新开一个终端 tab。
 
-### 为什么冷记忆 Docker 不让 wrapper 自动去拉？
+### 为什么冷记忆 Docker 不让 runtime 自动去拉？
 
 因为那样耦合太高，也不稳。
 
-wrapper 应该只负责：
+runtime 应该只负责：
 
 - 读取配置
-- 注入 bootstrap
-- 如果冷后端可用，优先把 `projects://<slug>/digest/current` 和 `projects://<slug>/anchors/current` 这类项目热层一起带进 bootstrap
+- 给 primer / bootstrap 提供冷后端数据
 - 失败时安静降级
 
 ### 为什么像“线路A / 方案B / 这个 / 那个”这种短指代不会再乱带偏？

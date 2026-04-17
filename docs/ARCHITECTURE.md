@@ -20,7 +20,7 @@ receives bootstrap context, and emits checkpoints.
 
 Examples:
 
-- Codex wrapper
+- Codex `AGENTS + hmctl` sidecar flow
 - Claude hook integration
 - Gemini wrapper
 
@@ -29,6 +29,7 @@ Examples:
 The core owns contracts and routing policy:
 
 - bootstrap mode selection
+- context-route selection
 - token budget resolution
 - hot-first / cold-second lookup order
 - ambiguous short-reference anchoring and suppression
@@ -41,6 +42,8 @@ The hot provider stores the fast local project state:
 
 - project capsule
 - active task
+- pinned constraints
+- next step
 - recent decisions
 - open loops
 - working set
@@ -58,16 +61,18 @@ generic so that another cold memory system can replace it later.
 
 ```text
 session start
--> host adapter asks memory-core for bootstrap
+-> host adapter asks memory-core for routed context
 -> memory-core reads hot capsule
+-> continuity cache may satisfy continuation-style query
 -> memory-core optionally asks cold provider for gist/facts
--> host adapter injects compact bootstrap into the CLI
+-> host adapter or sidecar returns compact project background to the CLI
 
 session progress
 -> host adapter emits checkpoints
 -> hot provider updates active task, working set, open loops
 
 session end or milestone
+-> background compactor dedupes and trims hot state
 -> memory-core decides whether to promote
 -> cold provider writes durable summary
 ```
@@ -75,6 +80,8 @@ session end or milestone
 ## Performance budgets
 
 - hot lookup target: under 50 ms
+- primer target: under 80 tokens for repeated project turns
+- continuity target: under 180 tokens for continuation-style turns
 - capsule assembly target: under 120 ms
 - cold recall timeout target: 200 to 500 ms
 - default bootstrap budget: 900 target tokens, 1400 hard cap

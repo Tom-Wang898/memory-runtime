@@ -1,6 +1,8 @@
 # Gemini integration example
 
-Gemini uses the same host-wrapper pattern as Codex and Claude.
+Gemini can still use a wrapped shell flow.
+
+That is different from Codex, which should stay native and use `AGENTS + hmctl`.
 
 Recommended install:
 

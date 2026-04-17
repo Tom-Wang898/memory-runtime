@@ -7,8 +7,12 @@
 | `MEMORY_RUNTIME_ROOT` | auto-detected repo root | Install root used by shell wrappers |
 | `MEMORY_RUNTIME_ENV_FILE` | `~/.memory-runtime/env.sh` | Optional shell env snippet loaded before wrapper defaults |
 | `MEMORY_RUNTIME_HOT_DB_PATH` | `~/.memory-runtime/hot-memory.db` | Local SQLite hot-state database |
+| `MEMORY_RUNTIME_PRIMER_DIR` | `~/.memory-runtime/primers` | Cache directory for compact primer files used by native Codex and shell hooks |
+| `MEMORY_RUNTIME_CONTINUITY_DIR` | `~/.memory-runtime/continuity` | Cache directory for continuity payloads used by routed context |
 | `MEMORY_RUNTIME_COLD_PROVIDER` | `memory-palace` | Cold provider selection (`memory-palace` or `none`) |
 | `MEMORY_RUNTIME_COLD_TIMEOUT_MS` | `350` | Hard timeout for cold recall |
+| `MEMORY_RUNTIME_AUTO_COMPACT` | `1` | Enable low-frequency background hot-memory compaction from shell integration |
+| `MEMORY_RUNTIME_COMPACT_MIN_INTERVAL_SEC` | `1800` | Minimum seconds between background compactor runs for the same project |
 
 ## Memory Palace adapter
 
@@ -66,7 +70,7 @@ Recommended rule for Docker deployments:
 
 | Variable | Default | Purpose |
 |---|---|---|
-| `MEMORY_RUNTIME_DISABLE` | `0` | If set to `1`, wrapper bypasses memory runtime and calls `codex` directly |
+| `MEMORY_RUNTIME_DISABLE` | `0` | If set to `1`, Claude and Gemini wrappers bypass memory runtime and call the host directly. Native Codex is already unaffected |
 
 ## Skill governance
 

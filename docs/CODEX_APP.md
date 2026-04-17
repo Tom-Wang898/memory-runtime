@@ -1,83 +1,88 @@
 # Codex App Integration
 
-`memory-runtime` integrates with `codex cli` and `codex app` through different
-entry paths.
+`memory-runtime` should not sit on the Codex app startup path.
 
-## Why app integration is different
+The stable route for both native `codex cli` and `codex app` is:
 
-- `codex cli` can be wrapped before the session starts
-- `codex app` does not expose the same shell-wrapper bootstrap hook
-- the app does share `~/.codex/config.toml`, MCP servers, `AGENTS.md`, and skills
+- keep Codex native
+- teach the project to call `hmctl`
+- use `hmctl context` as the default router
+- fall back to explicit `primer / continuity / bootstrap` only when you need manual control
 
-So the app path should use:
+## Why this is the recommended path
 
-- `memory-runtime` MCP tools
-- `AGENTS.md` rules that call those tools automatically
+- `codex app` does not expose a deterministic pre-session shell hook
+- MCP startup failures add latency and can block the session before real work starts
+- `hmctl context` keeps the default path small and predictable
+- `hmctl primer` is much smaller than a full bootstrap envelope, so repeated project turns cost fewer tokens
+- `hmctl continuity` restores current route and constraints without paying full bootstrap cost
+- `hmctl bootstrap` still uses the same runtime, hot memory, and cold memory stack when a richer answer is needed
 
-Not:
+## Recommended flow
 
-- shell-wrapper prompt injection
+1. Resolve the real project root.
+   If the workspace is a multi-project container, do not use the container root.
+2. On the first real project turn, run:
 
-## App-compatible tool surface
-
-The `memory-runtime-mcp` server exposes:
-
-- `memory_bootstrap`
-- `memory_checkpoint`
-- `memory_search`
-- `memory_project_state`
-
-If the app workspace is a multi-project root, pass `projectHint` with the real
-target project name or slug so the MCP layer can resolve the correct child
-project instead of the workspace container.
-
-These tools reuse the same project identity, bootstrap, risk-gating, and
-checkpoint logic as the CLI runtime.
-
-## Recommended config
-
-Add a new MCP server entry without replacing existing `memory-palace` config:
-
-```toml
-[mcp_servers.memory-runtime]
-type = "stdio"
-command = "/absolute/path/to/memory-runtime/bin/memory-runtime-mcp"
-startup_timeout_sec = 20.0
-tool_timeout_sec = 120.0
+```bash
+hmctl context --cwd "<project-root>" --query "<user request>"
 ```
 
-Keep your existing `memory-palace` MCP server. `memory-runtime` sits above it
-and reuses the same cold-memory backend.
+3. The router should behave like this:
 
-## Recommended AGENTS behavior
+```bash
+no query -> primer
+continuation-style query -> continuity
+deep-history query -> bootstrap
+```
 
-When running inside `codex app`:
+4. Treat the returned memory as supplemental background only.
+5. Write a checkpoint only when task state really changes:
 
-1. call `memory_project_state`
-2. if project memory exists, call `memory_bootstrap`
-3. if the workspace contains multiple real projects, pass `projectHint`
-4. use `backgroundSummary` and `backgroundPoints` for stable project background
-5. do not use `currentFocus` or `recentProgress` when the user asks what is already known about the project
-6. for \"what do you already know\" prompts, do not write memory first and do not continue execution unless the user explicitly asks to proceed
-7. only call `memory_checkpoint` when the task state changes, a new decision is made, an open loop appears, or the user explicitly asks to record it
-8. for short references like `this`, `that`, `route A`, call `memory_search`
-9. when the user asks a new standalone question, do not replay the previous answer unless the user explicitly asks for a recap or continuation
+```bash
+hmctl checkpoint --cwd "<project-root>" --summary "<stage summary>" --active-task "<current task>"
+```
+
+## Recommended AGENTS rules
+
+Use a project rule block that says, in effect:
+
+- keep `codex` native
+- on the first real project turn, call `hmctl context`
+- use explicit `hmctl primer` / `hmctl continuity` / `hmctl bootstrap` only when the route should be forced
+- answer "what do you already know" prompts only from stable background information
+- do not replay the previous answer when the user starts a new standalone question
+- checkpoint only when state changes, a new decision is made, or the user explicitly asks to record memory
+
+See `templates/AGENTS.memory.example.md` for a ready-to-merge example block.
+
+## Config guidance
+
+For the normal app path:
+
+- do not add `memory-runtime` as a startup-critical MCP server
+- keep `codex` native
+- use `templates/config.example.toml` only for profile and env examples
+- if you already run `memory-palace`, keep it as the cold backend only
+
+The goal is simple: memory should help the model, not become a second startup chain that can fail before the session begins.
 
 ## Validation checklist
 
-1. `codex_raw mcp list` shows `memory-runtime` as enabled
-2. `memory-runtime-mcp` responds to `initialize`
-3. open `codex app <project-path>`
-4. start a real task in a project with existing `digest/current`
-5. confirm the model first checks project memory before deeper work
-6. finish a task and confirm a new checkpoint is written
+1. Open `codex app <project-path>`.
+2. Start a real task in a project that already has hot or cold memory.
+3. Confirm the first memory read uses `hmctl context`, not a startup MCP dependency.
+4. Confirm a continuation-style query routes to `hmctl continuity`.
+5. Ask a query that needs richer historical context and confirm the fallback path uses `hmctl bootstrap`.
+6. Finish a stage and confirm `hmctl checkpoint` writes once.
+7. Ask a new unrelated question and confirm the model answers the current turn directly instead of replaying the last answer.
 
 ## Failure behavior
 
 App integration must stay fail-open.
 
-If `memory-runtime` MCP is unavailable:
+If `hmctl context`, `hmctl primer`, `hmctl continuity`, or `hmctl bootstrap` fails:
 
-- the app should still operate normally
-- project rules should fall back to existing digest/anchor guidance
-- no memory tool failure should block user work
+- Codex app should keep working normally
+- the project should continue from live repository context
+- no memory failure should block user work

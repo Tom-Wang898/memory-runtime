@@ -11,4 +11,5 @@ Current runners:
 
 - `npm run bench:bootstrap`
 - `npm run bench:tokens`
+  - compares compact primer output, continuity output, full bootstrap envelope, and naive JSON-sized context
 - `npm run bench:skills-governance`

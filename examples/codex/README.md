@@ -1,20 +1,24 @@
 # Codex integration example
 
-Codex should use a wrapper, not MCP-only bootstrap.
+Codex should stay native.
+
+Use `AGENTS + hmctl`, not a startup MCP dependency and not a `codex` shell wrapper.
 
 Why:
 
-- wrappers are deterministic
-- bootstrap happens before the session starts
-- token budget can be enforced without depending on model tool choice
+- this avoids startup regressions and MCP timeout noise
+- `hmctl primer` is smaller than full bootstrap, so repeated project turns cost fewer tokens
+- `hmctl bootstrap` stays available as the higher-fidelity fallback when the task actually needs it
 
 Runtime flow:
 
 ```text
-codex wrapper
--> hmctl bootstrap --cwd <project> --host codex
--> render host-safe bootstrap text
--> launch codex with the compact bootstrap envelope
+native codex session
+-> AGENTS rule resolves the real project root
+-> hmctl primer --cwd <project> --mode warm
+-> if needed, hmctl bootstrap --cwd <project> --mode warm --query "<request>"
+-> use the result as supplemental background only
+-> hmctl checkpoint when task state changes
 ```
 
 Recommended install:
@@ -24,10 +28,5 @@ Recommended install:
 source ~/.zshrc
 ```
 
-MCP remains useful for:
-
-- manual inspection
-- ad hoc cold recall
-- promotion debug
-
-It is not the primary automatic bootstrap channel.
+That gives you `hmctl`, background primer warming on directory change, and leaves
+`codex` itself untouched.

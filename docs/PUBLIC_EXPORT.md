@@ -22,7 +22,7 @@ Inspect the live list with:
 hmctl public-export --list-profiles
 ```
 
-If you want a shorter wrapper, use:
+If you want a shorter helper command, use:
 
 ```bash
 ./scripts/export-public.sh --profile codex-project-memory --source /path/to/codex --output /tmp/codex-public-export

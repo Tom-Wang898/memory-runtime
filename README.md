@@ -40,7 +40,8 @@ This repo is ready for public GitHub use as an `0.x` GitHub-first runtime:
 
 - hot memory is backed by local SQLite via `node:sqlite`
 - cold memory can use a real Memory Palace backend
-- Codex, Claude, and Gemini wrappers are implemented
+- Claude and Gemini wrappers are implemented
+- Codex stays native and uses `AGENTS + hmctl` for memory integration
 - shell integration can be installed with one command
 - cold-memory autostart is optional and fail-open
 - ambiguous short references are anchor-expanded or cold-recall-suppressed
@@ -89,7 +90,7 @@ CLI host
 - Node.js `22+` with `node:sqlite` support
 - npm `10+`
 - at least one supported host CLI already installed: Codex, Claude, or Gemini
-- `zsh` or `bash` if you want automatic wrapper loading
+- `zsh` or `bash` if you want shell helpers such as `hmctl`
 - optional: a running Memory Palace backend for cold recall
 - optional for Docker cold memory: Docker with `docker compose`
 
@@ -117,17 +118,60 @@ Use `--shell bash` if you want `~/.bashrc` instead.
 source ~/.zshrc
 ```
 
-4. Verify the wrappers and hot-memory runtime:
+4. Verify the shell helpers and routed context path:
 
 ```bash
 codex --help
 claude --help
 gemini --help
+hmctl primer --cwd "$(pwd)" --mode warm --json
+hmctl continuity --cwd "$(pwd)" --json
+hmctl context --cwd "$(pwd)" --query "continue with the current route" --json
 hmctl bootstrap --cwd "$(pwd)" --mode warm --query "runtime smoke test" --json
 ```
 
+Expected:
+
+- `codex` stays the native host CLI
+- `hmctl` is available as the memory sidecar command
+- `hmctl primer` returns a compact primer and writes a cache file
+- `hmctl continuity` returns a compact active-state recovery pack
+- `hmctl context` auto-routes between primer, continuity, and bootstrap
+- `hmctl bootstrap` returns the fuller fallback payload for query-specific recall
+- `claude` and `gemini` may still be wrapped through shell integration
+
 If you stop here, the runtime already works in hot-memory mode and will fail open
 if cold memory is unavailable.
+
+## Why routed context saves tokens
+
+The normal Codex path is:
+
+1. read a tiny cached primer
+2. use continuity for continuation-style queries
+3. only fall back to full bootstrap when the task needs more context
+
+That matters because both primer and continuity are intentionally smaller than the
+full Codex bootstrap envelope:
+
+- primer keeps only a short background line plus a few deduplicated points
+- continuity keeps the current route, pinned constraints, next step, and active open loops
+- primer is cached per project, so repeated project turns do not have to rebuild full context
+- continuity is cached separately, so “continue / route A / next step” style turns do not need full bootstrap
+- bootstrap still uses the same hot/cold runtime, but it is reserved for query-specific recall
+
+Run this to compare the sizes:
+
+```bash
+npm run bench:tokens
+```
+
+That benchmark reports token estimates for:
+
+- compact primer text
+- continuity text
+- full Codex bootstrap envelope
+- naive JSON-sized context
 
 5. Optional: audit local skills without editing them:
 
@@ -251,17 +295,25 @@ The shell installer injects a managed block into your shell rc file and wires:
 
 - `hmctl`
 - `memory_runtime_bridge`
-- `codex`
+- `memory_runtime_prime`
 - `claude`
 - `gemini`
 
-The wrappers:
+It leaves `codex` native.
 
-- inject compact bootstrap context before a session starts
-- prefer project hot-layer memory from `projects://<slug>/digest/current` and `projects://<slug>/anchors/current` when the cold backend provides them
-- keep the raw user prompt intact
-- write a lightweight checkpoint after the wrapped command exits
-- avoid polluting hot memory with synthetic wrapper summaries
+The installed sidecar path:
+
+- warms compact primer files in the background when you enter a real project directory
+- lets native Codex route reads through `hmctl context` or explicit `primer / continuity / bootstrap`
+- keeps `hmctl continuity` available for continuation-style turns without full bootstrap cost
+- keeps full `hmctl bootstrap` available when the task needs richer context
+- prefers project hot-layer memory from `projects://<slug>/digest/current` and `projects://<slug>/anchors/current` when the cold backend provides them
+- keeps the raw user prompt intact
+- avoids polluting hot memory with synthetic wrapper summaries
+- keeps heavy consolidation out of the synchronous startup path
+
+Claude and Gemini wrappers still exist for users who want wrapped shell flows on
+those hosts, but native Codex should not depend on them.
 
 The skill audit companion:
 
@@ -285,6 +337,18 @@ Optional benchmarks:
 npm run bench:bootstrap
 npm run bench:tokens
 npm run bench:skills-governance
+```
+
+Useful runtime commands:
+
+```bash
+hmctl context --cwd "$(pwd)" --query "continue" --json
+hmctl continuity --cwd "$(pwd)" --json
+hmctl compact --cwd "$(pwd)" --dry-run
+hmctl bootstrap --cwd "$(pwd)" --mode warm --query "debug query" --json
+hmctl checkpoint --cwd "$(pwd)" --summary "checkpoint summary"
+hmctl inspect --cwd "$(pwd)"
+hmctl metrics --cwd "$(pwd)"
 ```
 
 ## Repository docs

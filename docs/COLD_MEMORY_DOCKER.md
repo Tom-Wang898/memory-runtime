@@ -10,7 +10,7 @@ For `memory-runtime`, the stable default is:
 - deploy the Memory Palace **backend only**
 - keep the runtime talking to `http://127.0.0.1:<port>`
 - use an explicit API key by default
-- keep wrapper autostart disabled for Docker-backed installs
+- keep runtime autostart disabled for Docker-backed installs
 
 Why:
 
@@ -22,7 +22,7 @@ Why:
 
 - Docker installed
 - `docker compose` available
-- a supported host CLI already installed if you want wrapper-level automatic bootstrap
+- a supported host CLI already installed if you want native Codex sidecar memory or wrapped Claude/Gemini flows
 
 ## One-command backend setup
 
@@ -47,10 +47,10 @@ What the script does:
 For Docker-backed cold memory:
 
 - set `MEMORY_RUNTIME_MP_AUTOSTART=0`
-- do not expect the CLI wrapper to launch Docker
+- do not expect `memory-runtime` to launch Docker for you
 - treat the Docker stack as operator-managed infrastructure
 
-This separation keeps wrappers fast and predictable.
+This separation keeps the memory path fast and predictable.
 
 ## Options
 

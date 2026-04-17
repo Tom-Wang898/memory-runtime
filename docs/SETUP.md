@@ -32,8 +32,19 @@ source ~/.bashrc
 ```bash
 type hmctl
 type codex
-hmctl bootstrap --cwd "$(pwd)" --mode warm --query "runtime smoke test" --json
+hmctl primer --cwd "$(pwd)" --mode warm --json
+hmctl continuity --cwd "$(pwd)" --json
+hmctl context --cwd "$(pwd)" --query "continue with the current route" --json
+hmctl bootstrap --cwd "$(pwd)" --mode warm --query "setup smoke test" --json
 ```
+
+Expected:
+
+- `codex` resolves to the native host CLI, not `memory-runtime`
+- `hmctl primer` returns a compact cacheable primer for repeated project turns
+- `hmctl continuity` returns a compact active-state pack for continuation-style turns
+- `hmctl context` automatically routes between primer, continuity, and bootstrap
+- `hmctl bootstrap` returns the fuller fallback payload for query-specific context
 
 ## Optional: Codex app integration
 

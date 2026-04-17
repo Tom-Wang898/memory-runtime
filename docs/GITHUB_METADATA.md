@@ -12,7 +12,7 @@ Automatic hot/cold memory runtime for Codex, Claude, and Gemini that saves token
 
 ## Extended About text
 
-`memory-runtime` gives CLI agents a fail-open memory layer with local SQLite hot memory, optional Memory Palace cold memory, shell-based automatic bootstrap, safer short-reference recall, and sanitized public-export tooling.
+`memory-runtime` gives CLI agents a fail-open memory layer with local SQLite hot memory, optional Memory Palace cold memory, native Codex sidecar memory, safer short-reference recall, and sanitized public-export tooling.
 
 ## Suggested topics
 
@@ -54,7 +54,7 @@ Good first lines for the repo page:
 
 1. `Automatic hot/cold memory runtime for Codex, Claude, and Gemini.`
 2. `Saves tokens without rewriting the user prompt.`
-3. `Uses local SQLite hot memory, optional Memory Palace cold memory, and shell-based bootstrap.`
+3. `Uses local SQLite hot memory, optional Memory Palace cold memory, and a primer-first sidecar bootstrap path.`
 
 ## Discussions recommendation
 
