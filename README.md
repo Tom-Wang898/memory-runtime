@@ -42,6 +42,7 @@ This repo is ready for public GitHub use as an `0.x` GitHub-first runtime:
 - cold memory can use a real Memory Palace backend
 - Claude and Gemini wrappers are implemented
 - Codex stays native and uses `AGENTS + hmctl` for memory integration
+- Codex can optionally enable the hot-only `memory-hot` MCP without enabling the full runtime MCP
 - shell integration can be installed with one command
 - cold-memory autostart is optional and fail-open
 - ambiguous short references are anchor-expanded or cold-recall-suppressed
@@ -66,6 +67,7 @@ The runtime is split into replaceable layers:
 - `cold-memory-fixture`: deterministic fixture adapter for tests and benchmarks
 - `host-codex`: Codex bootstrap and checkpoint integration surface
 - `host-claude`: Claude-oriented bootstrap rendering surface
+- `memory-hot-mcp`: optional hot-only MCP for local SQLite state and continuity
 - `mcp-bridge`: optional stdio bridge for inspection and promotion flows
 
 ```text
@@ -300,6 +302,12 @@ The shell installer injects a managed block into your shell rc file and wires:
 - `gemini`
 
 It leaves `codex` native.
+
+Codex MCP support is split on purpose:
+
+- `memory-hot` can be enabled for local SQLite hot memory
+- `memory-palace` can be enabled for explicit durable cold memory
+- the full `memory-runtime` MCP should stay disabled on the startup path
 
 The installed sidecar path:
 

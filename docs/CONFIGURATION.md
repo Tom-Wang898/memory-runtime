@@ -72,6 +72,37 @@ Recommended rule for Docker deployments:
 |---|---|---|
 | `MEMORY_RUNTIME_DISABLE` | `0` | If set to `1`, Claude and Gemini wrappers bypass memory runtime and call the host directly. Native Codex is already unaffected |
 
+## Codex MCP split
+
+Use the hot-only MCP when you want Codex MCP tools without putting cold recall
+on the startup path:
+
+```toml
+[mcp_servers.memory-hot]
+type = "stdio"
+command = "/absolute/path/to/memory-runtime/bin/memory-hot-mcp"
+startup_timeout_sec = 5.0
+tool_timeout_sec = 10.0
+enabled = true
+
+[mcp_servers.memory-hot.env]
+HOME = "/Users/you"
+MEMORY_RUNTIME_COLD_PROVIDER = "none"
+```
+
+Keep the full runtime MCP disabled for native Codex startup:
+
+```toml
+[mcp_servers.memory-runtime]
+enabled = false
+```
+
+The split is intentional:
+
+- `memory-hot`: local SQLite hot state only
+- `memory-palace`: durable cold memory
+- `hmctl`: routing, compaction, promotion, diagnostics, and benchmarks
+
 ## Skill governance
 
 | Variable | Default | Purpose |

@@ -53,6 +53,12 @@ Use the example config and app guide:
 - `templates/config.example.toml`
 - `docs/CODEX_APP.md`
 
+Recommended MCP split:
+
+- enable `memory-hot` for hot-only local SQLite tools
+- keep the full `memory-runtime` MCP disabled
+- keep `memory-palace` as the optional cold-memory MCP/backend
+
 ## Optional: cold memory
 
 Use the Docker guide:

@@ -1,6 +1,7 @@
 # Example additions for native Codex.
 # Replace placeholders with local paths on the target machine.
-# No memory-runtime MCP server is required for the normal Codex path.
+# Keep the full memory-runtime MCP off the startup path. If you want MCP access,
+# use the hot-only MCP below and keep cold recall in Memory Palace / hmctl.
 
 [profiles."memory-sidecar"]
 model_reasoning_effort = "low"
@@ -13,3 +14,21 @@ MEMORY_RUNTIME_ROOT = "{{MEMORY_RUNTIME_ROOT}}"
 MEMORY_RUNTIME_MP_BASE_URL = "http://127.0.0.1:18000"
 MEMORY_RUNTIME_HOT_DB_PATH = "{{HOME}}/.memory-runtime/hot-memory.db"
 MEMORY_RUNTIME_PRIMER_DIR = "{{HOME}}/.memory-runtime/primers"
+
+[mcp_servers.memory-hot]
+type = "stdio"
+command = "{{MEMORY_RUNTIME_ROOT}}/bin/memory-hot-mcp"
+startup_timeout_sec = 5.0
+tool_timeout_sec = 10.0
+enabled = true
+
+[mcp_servers.memory-hot.env]
+HOME = "{{HOME}}"
+MEMORY_RUNTIME_COLD_PROVIDER = "none"
+
+[mcp_servers.memory-runtime]
+type = "stdio"
+command = "{{MEMORY_RUNTIME_ROOT}}/bin/memory-runtime-mcp-debug"
+startup_timeout_sec = 90.0
+tool_timeout_sec = 120.0
+enabled = false

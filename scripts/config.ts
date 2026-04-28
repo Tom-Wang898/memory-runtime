@@ -107,7 +107,7 @@ const resolveGitRoot = (cwd: string): string | null => {
   }
 };
 
-const resolveHotDatabasePath = (): string =>
+export const resolveHotDatabasePath = (): string =>
   resolvePath(
     process.env.MEMORY_RUNTIME_HOT_DB_PATH ?? join(homedir(), ".memory-runtime", "hot-memory.db"),
   );

@@ -180,7 +180,7 @@ test("compactHotProject rewrites hot state and continuity cache", async () => {
       cwd: projectDir,
       host: "codex",
       maxOpenLoopAgeDays: 21,
-      maxWorkingSetAgeDays: 7,
+      maxWorkingSetAgeDays: 14,
       maxDecisionAgeDays: 30,
     });
 
